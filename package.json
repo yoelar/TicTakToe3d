@@ -8,5 +8,8 @@
   },
   "scripts": {
     "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
   }
 }
