@@ -1,21 +1,68 @@
-﻿import { Game, MoveResult } from './Game';
+﻿// backend/src/components/TicTacToeGame.ts
+import { Game, MoveResult } from './Game';
 import { TicTacToePlayer } from './TicTacToePlayer';
 
-export abstract class TicTacToeGame extends Game {
-    public players: TicTacToePlayer[] = [];
-    public currentPlayerSign: 'X' | 'O' = 'X';
+export interface TicTacToeMove {
+    x: number;
+    y: number;
+    z?: number;
+}
 
-    addPlayer(player: TicTacToePlayer): void {
-        // TODO: Implement later
+/**
+ * Abstract base for any tic-tac-toe variant (2D, 3D, N×N×N).
+ * Implements player management, turn rotation, and solo-mode logic.
+ */
+export abstract class TicTacToeGame extends Game {
+    protected currentPlayerSign: 'X' | 'O' = 'X';
+    protected winner: 'X' | 'O' | 'Draw' | null = null;
+    protected players: TicTacToePlayer[] = [];
+
+    constructor(id: string) {
+        super(id);
     }
 
-    makeMove(player: TicTacToePlayer, x: number, y: number, z: number): MoveResult {
-        return { success: false, error: 'Not implemented' };
+    addPlayer(player: TicTacToePlayer): void {
+        if (this.players.length >= 2) {
+            throw new Error('Game full');
+        }
+        this.players.push(player);
+    }
+
+    getPlayers(): TicTacToePlayer[] {
+        return [...this.players];
     }
 
     isSoloMode(): boolean {
-        return this.players.length <= 1;
+        return this.players.length === 1;
     }
 
-    abstract getBoard(): string[][][];
+    protected rotateTurnAfterMove(): void {
+        this.currentPlayerSign = this.currentPlayerSign === 'X' ? 'O' : 'X';
+    }
+
+    protected validateMoveData(move: TicTacToeMove): void {
+        if (typeof move.x !== 'number' || typeof move.y !== 'number') {
+            throw new Error('Invalid move data');
+        }
+    }
+
+    /**
+     * Overloaded abstract move interface — implemented in subclasses.
+     */
+    abstract makeMove(player: TicTacToePlayer, move: TicTacToeMove): MoveResult;
+    abstract makeMove(player: TicTacToePlayer, x: number, y: number, z?: number): MoveResult;
+
+    /**
+     * Each concrete subclass must define its own serialization.
+     */
+    abstract serialize(): object;
+
+    public getCurrentPlayer(): 'X' | 'O' {
+        return this.currentPlayerSign;
+    }
+
+    public getWinner(): 'X' | 'O' | 'Draw' | null {
+        return this.winner;
+    }
 }
+

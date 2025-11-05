@@ -45,7 +45,7 @@ describe('Game hierarchy', () => {
     it('alternates turns in two-player mode', () => {
         game.addPlayer(playerO);
         game.makeMove(playerX, 0, 0, 0);
-        expect(game.currentPlayerSign).toBe('O');
+        expect(game.getCurrentPlayer()).toBe('O');
     });
 
     it('detects a win across a row', () => {
@@ -55,6 +55,6 @@ describe('Game hierarchy', () => {
         game.makeMove(playerX, 1, 0, 0);
         game.makeMove(playerO, 1, 1, 0);
         game.makeMove(playerX, 2, 0, 0);
-        expect(game.winner).toBe('X');
+        expect(game.getWinner()).toBe('X');
     });
 });
