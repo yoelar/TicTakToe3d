@@ -26,25 +26,22 @@ export class ThreeDTicTacToeGame extends TicTacToeGame {
         return this.board.map(layer => layer.map(row => [...row]));
     }
 
-    // ✅ Added overloads for convenience
+    // --- before implementation ---
     makeMove(player: TicTacToePlayer, moveData: TicTacToeMove): MoveResult;
     makeMove(player: TicTacToePlayer, x: number, y: number, z: number): MoveResult;
-    makeMove(player: TicTacToePlayer, arg2: any, arg3?: number, arg4?: number): MoveResult {
-        let move: TicTacToeMove;
 
-        if (typeof arg2 === 'object') {
-            move = arg2 as TicTacToeMove;
-        } else {
-            move = { x: arg2, y: arg3!, z: arg4! };
-        }
+    // --- implementation ---
+    makeMove(player: TicTacToePlayer, a: TicTacToeMove | number, b?: number, c?: number): MoveResult {
+        const moveData: TicTacToeMove =
+            typeof a === 'object' ? a : { x: a, y: b as number, z: c as number };
 
         try {
-            this.validateMoveData(move);
+            this.validateMoveData(moveData);
         } catch (err: any) {
             return { success: false, error: err.message };
         }
 
-        const { x, y, z } = move;
+        const { x, y, z } = moveData;
         if (z === undefined) return { success: false, error: 'Missing z coordinate for 3D game' };
         if (this.winner) return { success: false, error: 'Game already finished' };
         if ([x, y, z].some(v => v < 0 || v >= this.size)) return { success: false, error: 'Invalid coordinates' };
@@ -54,22 +51,25 @@ export class ThreeDTicTacToeGame extends TicTacToeGame {
             const flat = this.board.flat(2);
             const xCount = flat.filter(c => c === 'X').length;
             const oCount = flat.filter(c => c === 'O').length;
-            const nextSign: Cell = xCount === oCount ? 'X' : 'O';
+            const nextSign: 'X' | 'O' = xCount === oCount ? 'X' : 'O';
             this.board[z][y][x] = nextSign;
             this.currentPlayerSign = nextSign === 'X' ? 'O' : 'X';
         } else {
-            if (!this.players.find(p => p.id === player.id)) {
+            if (!this.players.find(p => p.id === player.id))
                 return { success: false, error: 'Player not part of this game' };
-            }
-            if (player.sign !== this.currentPlayerSign) {
+            if (player.sign !== this.currentPlayerSign)
                 return { success: false, error: "Not this player's turn" };
-            }
+
             this.board[z][y][x] = player.sign;
             this.rotateTurnAfterMove();
         }
 
         this.winner = this.checkWinner();
         return { success: true };
+    }
+
+    protected rotateTurnAfterMove() {
+        this.currentPlayerSign = this.currentPlayerSign === 'X' ? 'O' : 'X';
     }
 
     private checkWinner(): 'X' | 'O' | 'Draw' | null {
@@ -110,18 +110,14 @@ export class ThreeDTicTacToeGame extends TicTacToeGame {
         return lines;
     }
 
-    public serialize(): object {
+    serialize() {
         return {
             id: this.id,
             board: this.getBoard(),
             currentPlayer: this.currentPlayerSign,
             winner: this.winner,
             soloMode: this.isSoloMode(),
-            players: this.players.map(p => ({
-                id: p.id,
-                sign: p.sign,
-                connected: p.connected ?? true,
-            })),
+            players: this.players.map(p => ({ id: p.id, sign: p.sign }))
         };
     }
 }

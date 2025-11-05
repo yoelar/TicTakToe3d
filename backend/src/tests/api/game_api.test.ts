@@ -8,9 +8,9 @@ describe('3D TicTacToe REST API', () => {
   let clientB = 'clientB';
   let gameId: string;
 
-  afterAll(done => {
-    server.close(done);
-  });
+    afterAll(() => {
+        if (server.listening) server.close();
+    });
 
   it('should create a new game', async () => {
     const res = await request

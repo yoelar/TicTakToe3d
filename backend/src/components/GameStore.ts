@@ -1,5 +1,6 @@
 ﻿import { ThreeDTicTacToeGame } from './ThreeDTicTacToeGame';
 import { TicTacToePlayer } from './TicTacToePlayer';
+import { randomUUID } from 'crypto';
 
 export const games: Record<string, ThreeDTicTacToeGame> = {};
 export const playersByGame: Record<string, TicTacToePlayer[]> = {};
@@ -8,12 +9,23 @@ export const playersByGame: Record<string, TicTacToePlayer[]> = {};
  * Creates a new 3D TicTacToe game for the given clientId.
  */
 export function createGame(clientId: string) {
+    const gameId = randomUUID();
+    const game = new ThreeDTicTacToeGame(gameId);
+
+    const player = new TicTacToePlayer(clientId, 'X');
+    game.addPlayer(player);
+
+    // ✅ Explicitly initialize first turn to 'X'
+    (game as any).currentPlayerSign = 'X';
+
+    games[gameId] = game;
+    playersByGame[gameId] = [player];
+
     return {
-        gameId: 'not-implemented',
-        player: 'X',
+        success: true,
+        gameId,
+        player: 'X' as const,
         playerId: clientId,
-        success: false,
-        error: 'Not implemented yet',
     };
 }
 
@@ -21,10 +33,39 @@ export function createGame(clientId: string) {
  * Allows another client to join an existing game.
  */
 export function joinGame(gameId: string, clientId: string) {
+    const game = games[gameId];
+    if (!game) {
+        return { success: false, error: 'Game not found' };
+    }
+
+    const players = playersByGame[gameId] || [];
+
+    // 🧩 Reject if already two players are connected
+    if (players.length >= 2) {
+        return { success: false, error: 'Game full' };
+    }
+
+    // 🧩 Prevent same client from joining again
+    if (players.some(p => p.id === clientId)) {
+        return { success: false, error: 'Player already joined' };
+    }
+
+    const existingSigns = players.map(p => p.sign);
+    const newSign: 'X' | 'O' = existingSigns.includes('X') ? 'O' : 'X';
+
+    const newPlayer = new TicTacToePlayer(clientId, newSign);
+    game.addPlayer(newPlayer);
+    players.push(newPlayer);
+    playersByGame[gameId] = players;
+
+    // ✅ If there are now two players, ensure the first turn starts with X
+    if (players.length === 2) {
+        (game as any).currentPlayerSign = 'X';
+    }
+
     return {
-        success: false,
-        error: 'Not implemented yet',
-        player: 'O',
+        success: true,
+        player: newSign,
         playerId: clientId,
     };
 }
@@ -32,15 +73,30 @@ export function joinGame(gameId: string, clientId: string) {
 /**
  * Handles a move request from a player.
  */
-export function makeMove(
-    gameId: string,
-    clientId: string,
-    moveData: { x: number; y: number; z: number },
-    sign: 'X' | 'O'
-) {
+export function makeMove(gameId: string, clientId: string, moveData: any) {
+    const game = games[gameId];
+    if (!game) {
+        return { success: false, error: 'Game not found' };
+    }
+
+    const players = playersByGame[gameId];
+    if (!players) {
+        return { success: false, error: 'No players for this game' };
+    }
+
+    // 🧩 Locate player
+    const player = players.find(p => p.id === clientId);
+    if (!player) {
+        return { success: false, error: 'Invalid playerId' };
+    }
+
+    // 🧩 Delegate to the actual game logic
+    const result = game.makeMove(player, moveData);
+
+    // ✅ Return full state snapshot
     return {
-        success: false,
-        error: 'Not implemented yet',
-        state: null,
+        success: result.success,
+        error: result.error,
+        state: game.serialize(),
     };
 }

@@ -36,17 +36,32 @@ describe('GameStore', () => {
         expect(join3.error).toMatch(/full/i);
     });
 
-    it('supports moves in solo mode', () => {
-        const g1 = createGame(clientA);
-        const move1 = makeMove(g1.gameId, clientA, { x: 0, y: 0, z: 0 }, 'X');
+    it('should alternate automatically in solo mode', () => {
+        const { gameId } = createGame(clientA);
+
+        const move1 = makeMove(gameId, clientA, { x: 0, y: 0, z: 0 });
         expect(move1.success).toBe(true);
-        const move2 = makeMove(g1.gameId, clientA, { x: 1, y: 1, z: 1 }, 'O');
+
+        const move2 = makeMove(gameId, clientA, { x: 1, y: 1, z: 1 });
         expect(move2.success).toBe(true);
+
+        const board = move2.state.board;
+        expect(board[0][0][0]).toBe('X');
+        expect(board[1][1][1]).toBe('O');
     });
 
-    it('returns error for move on invalid gameId', () => {
-        const move = makeMove('fake-id', clientA, { x: 0, y: 0, z: 0 }, 'X');
-        expect(move.success).toBe(false);
-        expect(move.error).toMatch(/not found/i);
+    it('should reject a move if it is not the player’s turn in two-player mode', () => {
+        const g1 = createGame('playerX');
+        joinGame(g1.gameId, 'playerO');
+
+        // X moves first
+        const move1 = makeMove(g1.gameId, 'playerX', { x: 0, y: 0, z: 0 });
+        expect(move1.success).toBe(true);
+
+        // X tries again immediately — should fail
+        const move2 = makeMove(g1.gameId, 'playerX', { x: 1, y: 0, z: 0 });
+        expect(move2.success).toBe(false);
+        expect(move2.error).toMatch(/not this player's turn/i);
     });
+
 });

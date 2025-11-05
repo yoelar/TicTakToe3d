@@ -19,13 +19,25 @@ export abstract class TicTacToeGame extends Game {
 
     constructor(id: string) {
         super(id);
+        this.currentPlayerSign = 'X'; // ✅ Always start with X's turn
     }
 
     addPlayer(player: TicTacToePlayer): void {
         if (this.players.length >= 2) {
             throw new Error('Game full');
         }
+
+        // prevent same player joining twice
+        if (this.players.some(p => p.id === player.id)) {
+            throw new Error('Player already joined');
+        }
+
         this.players.push(player);
+
+        // ✅ If we now have two players, ensure game starts with X
+        if (this.players.length === 2) {
+            this.currentPlayerSign = 'X';
+        }
     }
 
     getPlayers(): TicTacToePlayer[] {
