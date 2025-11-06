@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import http from 'http';
 import { randomUUID } from 'crypto';
-import { games, playersByGame, createGame, joinGame, makeMove } from './components/GameStore';
+import { games, playersByGame, createGame, joinGame, makeMove, leaveGame } from './components/GameStore';
 
 
 export const app = express();
@@ -76,9 +76,18 @@ app.get('/api/game/:id/state', (req: Request, res: Response) => {
     res.json(game.serialize());
 });
 
-// ✅ Leave game (optional for now)
+// ✅ Leave game
+// Player leaves a game
 app.post('/api/game/:id/leave', (req: Request, res: Response) => {
-    res.status(501).json({ error: 'Not implemented yet' });
+    const { id } = req.params;
+    const clientId = req.query.clientId as string;
+
+    if (!clientId) {
+        return res.status(400).json({ error: 'Missing clientId' });
+    }
+
+    const result = leaveGame(id, clientId);
+    return res.status(result.success ? 200 : 400).json(result);
 });
 
 // ---------------------------------------------

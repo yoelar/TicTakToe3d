@@ -16,6 +16,7 @@ export abstract class TicTacToeGame extends Game {
     protected currentPlayerSign: 'X' | 'O' = 'X';
     protected winner: 'X' | 'O' | 'Draw' | null = null;
     protected players: TicTacToePlayer[] = [];
+    protected soloMode = true;
 
     constructor(id: string) {
         super(id);
@@ -38,14 +39,26 @@ export abstract class TicTacToeGame extends Game {
         if (this.players.length === 2) {
             this.currentPlayerSign = 'X';
         }
+
+        this.soloMode = this.players.length < 2;
     }
 
     getPlayers(): TicTacToePlayer[] {
         return [...this.players];
     }
 
+    removePlayer(player: TicTacToePlayer): void {
+        this.players = this.players.filter(p => p.id !== player.id);
+        this.soloMode = this.players.length < 2; // ✅ update after removal
+    }
+
+    setSoloMode(enabled: boolean): void {
+        // For now, solo mode is implicit when < 2 players, but explicit flag helps
+        this.soloMode = enabled;
+    }
+
     isSoloMode(): boolean {
-        return this.players.length === 1;
+        return this.players.length < 2 || this.soloMode === true;
     }
 
     protected rotateTurnAfterMove(): void {

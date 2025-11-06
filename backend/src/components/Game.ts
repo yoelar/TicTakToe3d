@@ -30,6 +30,11 @@ export abstract class Game {
     abstract addPlayer(player: any): void;
 
     /**
+     * Removes a player from the game.
+     */
+    abstract removePlayer(player: any): void;
+
+    /**
      * Applies a move by a player.
      * The moveData is kept generic so higher-level logic
      * (e.g., TicTacToe, Chess, etc.) can interpret it.

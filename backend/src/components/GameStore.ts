@@ -100,3 +100,45 @@ export function makeMove(gameId: string, clientId: string, moveData: any) {
         state: game.serialize(),
     };
 }
+
+/**
+ * Handles a player leaving a game.
+ */
+export function leaveGame(gameId: string, clientId: string) {
+    const game = games[gameId];
+    if (!game) {
+        return { success: false, error: 'Game not found' };
+    }
+
+    const players = playersByGame[gameId];
+    if (!players || players.length === 0) {
+        return { success: false, error: 'No players to remove' };
+    }
+
+    const playerIndex = players.findIndex(p => p.id === clientId);
+    if (playerIndex === -1) {
+        return { success: false, error: 'Player not found in this game' };
+    }
+
+    // Remove the player from the registry
+    const [removedPlayer] = players.splice(playerIndex, 1);
+
+    // Reflect removal in the actual game object
+    game.removePlayer(removedPlayer);
+
+    // Determine resulting mode
+    if (players.length === 1) {
+        // One player left — revert to solo mode
+        game.setSoloMode(true);
+    } else if (players.length === 0) {
+        // Game empty — still reusable by future players
+        playersByGame[gameId] = [];
+    }
+
+    return {
+        success: true,
+        remainingPlayers: players.map(p => ({ id: p.id, sign: p.sign })),
+        soloMode: game.isSoloMode(),
+    };
+}
+
