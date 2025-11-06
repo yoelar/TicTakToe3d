@@ -38,36 +38,10 @@ export function joinGame(gameId: string, clientId: string) {
         return { success: false, error: 'Game not found' };
     }
 
-    const players = playersByGame[gameId] || [];
-
-    // 🧩 Reject if already two players are connected
-    if (players.length >= 2) {
-        return { success: false, error: 'Game full' };
-    }
-
-    // 🧩 Prevent same client from joining again
-    if (players.some(p => p.id === clientId)) {
-        return { success: false, error: 'Player already joined' };
-    }
-
-    const existingSigns = players.map(p => p.sign);
-    const newSign: 'X' | 'O' = existingSigns.includes('X') ? 'O' : 'X';
-
-    const newPlayer = new TicTacToePlayer(clientId, newSign);
-    game.addPlayer(newPlayer);
-    players.push(newPlayer);
-    playersByGame[gameId] = players;
-
-    // ✅ If there are now two players, ensure the first turn starts with X
-    if (players.length === 2) {
-        (game as any).currentPlayerSign = 'X';
-    }
-
-    return {
-        success: true,
-        player: newSign,
-        playerId: clientId,
-    };
+    const result = game.joinPlayer(clientId);
+    return result.success
+        ? { success: true, player: result.player, playerId: clientId }
+        : { success: false, error: result.error };
 }
 
 /**
@@ -127,10 +101,7 @@ export function leaveGame(gameId: string, clientId: string) {
     game.removePlayer(removedPlayer);
 
     // Determine resulting mode
-    if (players.length === 1) {
-        // One player left — revert to solo mode
-        game.setSoloMode(true);
-    } else if (players.length === 0) {
+    if (players.length === 0) {
         // Game empty — still reusable by future players
         playersByGame[gameId] = [];
     }

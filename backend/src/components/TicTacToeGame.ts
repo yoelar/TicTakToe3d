@@ -16,31 +16,41 @@ export abstract class TicTacToeGame extends Game {
     protected currentPlayerSign: 'X' | 'O' = 'X';
     protected winner: 'X' | 'O' | 'Draw' | null = null;
     protected players: TicTacToePlayer[] = [];
-    protected soloMode = true;
 
     constructor(id: string) {
         super(id);
         this.currentPlayerSign = 'X'; // ✅ Always start with X's turn
     }
 
-    addPlayer(player: TicTacToePlayer): void {
+    joinPlayer(clientId: string): { success: boolean; player?: 'X' | 'O'; error?: string } {
+        // Already has this player?
+        const existing = this.players.find(p => p.id === clientId);
+        if (existing) {
+            return { success: false, error: 'Player already joined' };
+        }
+
+        // Reject if full
         if (this.players.length >= 2) {
-            throw new Error('Game full');
+            return { success: false, error: 'Game full' };
         }
 
-        // prevent same player joining twice
-        if (this.players.some(p => p.id === player.id)) {
-            throw new Error('Player already joined');
-        }
+        // Assign next available sign
+        const existingSigns = this.players.map(p => p.sign);
+        const newSign: 'X' | 'O' = existingSigns.includes('X') ? 'O' : 'X';
+        const newPlayer = new TicTacToePlayer(clientId, newSign);
 
-        this.players.push(player);
+        this.addPlayer(newPlayer);
 
-        // ✅ If we now have two players, ensure game starts with X
+        // First move should always start with X
         if (this.players.length === 2) {
             this.currentPlayerSign = 'X';
         }
 
-        this.soloMode = this.players.length < 2;
+        return { success: true, player: newSign };
+    }
+
+    addPlayer(player: TicTacToePlayer): void {
+        this.players.push(player);
     }
 
     getPlayers(): TicTacToePlayer[] {
@@ -49,16 +59,10 @@ export abstract class TicTacToeGame extends Game {
 
     removePlayer(player: TicTacToePlayer): void {
         this.players = this.players.filter(p => p.id !== player.id);
-        this.soloMode = this.players.length < 2; // ✅ update after removal
-    }
-
-    setSoloMode(enabled: boolean): void {
-        // For now, solo mode is implicit when < 2 players, but explicit flag helps
-        this.soloMode = enabled;
     }
 
     isSoloMode(): boolean {
-        return this.players.length < 2 || this.soloMode === true;
+        return this.players.length < 2;
     }
 
     protected rotateTurnAfterMove(): void {
