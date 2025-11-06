@@ -1,15 +1,15 @@
 import { TicTacToePlayer } from '../../../src/components/TicTacToePlayer';
 
 describe('TicTacToePlayer', () => {
-    it('should create a TicTacToe player with a valid sign', () => {
+    it('should create a TicTacToe player with a valid symbol', () => {
         const player = new TicTacToePlayer('p1', 'X');
         expect(player.id).toBe('p1');
-        expect(player.sign).toBe('X');
+        expect(player.symbol).toBe('X');
     });
 
-    it('should throw error for invalid sign', () => {
+    it('should throw error for invalid symbol', () => {
         // @ts-expect-error
-        expect(() => new TicTacToePlayer('p2', 'Z')).toThrow(/invalid sign/i);
+        expect(() => new TicTacToePlayer('p2', 'Z')).toThrow(/invalid symbol/i);
     });
 
     it('should correctly determine if it can play based on current turn', () => {

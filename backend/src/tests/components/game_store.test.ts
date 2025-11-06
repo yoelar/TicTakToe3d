@@ -1,4 +1,4 @@
-﻿import { createGame, joinGame, makeMove, games, playersByGame } from '../../components/GameStore';
+﻿import { createGame, joinGame, makeMove, games } from '../../components/GameStore';
 
 describe('GameStore', () => {
     const clientA = 'clientA';
@@ -8,7 +8,6 @@ describe('GameStore', () => {
     afterEach(() => {
         // cleanup between tests
         for (const key in games) delete games[key];
-        for (const key in playersByGame) delete playersByGame[key];
     });
 
     it('creates a new game and assigns X to the first player', () => {
@@ -16,7 +15,6 @@ describe('GameStore', () => {
         expect(result).toHaveProperty('gameId');
         expect(result.player).toBe('X');
         expect(games[result.gameId]).toBeDefined();
-        expect(playersByGame[result.gameId]).toHaveLength(1);
         gameId = result.gameId;
     });
 
@@ -25,7 +23,6 @@ describe('GameStore', () => {
         const join = joinGame(g1.gameId, clientB);
         expect(join.success).toBe(true);
         expect(join.player).toBe('O');
-        expect(playersByGame[g1.gameId]).toHaveLength(2);
     });
 
     it('rejects joining a full game', () => {

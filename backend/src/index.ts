@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import http from 'http';
 import { randomUUID } from 'crypto';
-import { games, playersByGame, createGame, joinGame, makeMove, leaveGame } from './components/GameStore';
+import { games, createGame, joinGame, makeMove, leaveGame } from './components/GameStore';
 
 
 export const app = express();

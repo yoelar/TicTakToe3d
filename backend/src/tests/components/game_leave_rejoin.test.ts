@@ -1,12 +1,11 @@
 ﻿import { createGame, joinGame, makeMove } from '../../../src/components/GameStore';
-import { games, playersByGame } from '../../../src/components/GameStore';
+import { games } from '../../../src/components/GameStore';
 import { TicTacToePlayer } from '../../../src/components/TicTacToePlayer';
 
 describe('GameStore leave and rejoin scenarios', () => {
 
     beforeEach(() => {
         for (const key in games) delete games[key];
-        for (const key in playersByGame) delete playersByGame[key];
     });
 
     it('1️⃣ Solo → join → continue play', () => {
@@ -29,9 +28,8 @@ describe('GameStore leave and rejoin scenarios', () => {
 
         // simulate player2 leaving
         const game = games[g1.gameId];
-        const p2 = playersByGame[g1.gameId].find(p => p.id === 'p2')!;
+        const p2 = game.getPlayers().find(p => p.id === 'p2')!;
         game.removePlayer(p2);
-        playersByGame[g1.gameId] = playersByGame[g1.gameId].filter(p => p.id !== 'p2');
 
         // p1 can continue solo
         const move2 = makeMove(g1.gameId, 'p1', { x: 1, y: 1, z: 1 });
@@ -45,9 +43,8 @@ describe('GameStore leave and rejoin scenarios', () => {
         makeMove(g1.gameId, 'p1', { x: 0, y: 0, z: 0 });
 
         const game = games[g1.gameId];
-        const p1 = playersByGame[g1.gameId].find(p => p.id === 'p1')!;
+        const p1 = game.getPlayers().find(p => p.id === 'p1')!;
         game.removePlayer(p1);
-        playersByGame[g1.gameId] = playersByGame[g1.gameId].filter(p => p.id !== 'p1');
 
         const move = makeMove(g1.gameId, 'p2', { x: 1, y: 1, z: 1 });
         expect(move.success).toBe(true);
@@ -60,9 +57,8 @@ describe('GameStore leave and rejoin scenarios', () => {
 
         // player1 leaves
         const game = games[g1.gameId];
-        const p1 = playersByGame[g1.gameId].find(p => p.id === 'p1')!;
+        const p1 = game.getPlayers().find(p => p.id === 'p1')!;
         game.removePlayer(p1);
-        playersByGame[g1.gameId] = playersByGame[g1.gameId].filter(p => p.id !== 'p1');
 
         // player3 joins — should get X
         const join3 = joinGame(g1.gameId, 'p3');
@@ -78,11 +74,10 @@ describe('GameStore leave and rejoin scenarios', () => {
         joinGame(g1.gameId, 'p2');
         const game = games[g1.gameId];
 
-        const p1 = playersByGame[g1.gameId].find(p => p.id === 'p1')!;
-        const p2 = playersByGame[g1.gameId].find(p => p.id === 'p2')!;
+        const p1 = game.getPlayers().find(p => p.id === 'p1')!;
+        const p2 = game.getPlayers().find(p => p.id === 'p2')!;
         game.removePlayer(p1);
         game.removePlayer(p2);
-        playersByGame[g1.gameId] = [];
 
         const join3 = joinGame(g1.gameId, 'p3');
         expect(join3.success).toBe(true);
