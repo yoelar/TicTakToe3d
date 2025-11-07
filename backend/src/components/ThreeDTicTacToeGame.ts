@@ -1,6 +1,6 @@
 ﻿import { TicTacToeGame } from './TicTacToeGame';
 import { TicTacToePlayer } from './TicTacToePlayer';
-import { MoveResult } from './types';
+import { MoveResult, GameState } from './types';
 
 /**
  * 3D TicTacToe implementation (3×3×3 cube).
@@ -29,54 +29,67 @@ export class ThreeDTicTacToeGame extends TicTacToeGame<string[][][]> {
         );
     }
 
-    override getCell(x: number, y: number, z: number): string {
-        return this.board[z][y][x];
+    protected setCell(x: number, y: number, symbol: string, z?: number): void {
+        // Correct 3D indexing: [z][y][x]
+        if (z === undefined) return;
+        (this.board as any)[z][y][x] = symbol;
     }
 
-    override setCell(x: number, y: number, symbol: 'X' | 'O', z: number): void {
-        this.board[z][y][x] = symbol;
+    protected getCell(x: number, y: number, z?: number): string {
+        if (z === undefined) return '';
+        return (this.board as any)[z][y][x];
     }
 
-    /**
-     * Make a move in the 3D grid.
-     * Includes validation, turn order, and winner detection.
-     */
-    makeMove(player: TicTacToePlayer, { x, y, z }: { x: number; y: number; z?: number }): MoveResult {
+    makeMove(player: TicTacToePlayer, moveData: { x: number; y: number; z?: number }): MoveResult {
+        const { x, y, z } = moveData;
+
+        if (z === undefined) {
+            return { success: false, error: 'Missing z coordinate for 3D move' };
+        }
+
         if (!this.isValidCoordinates(x, y, z)) {
             return { success: false, error: 'Invalid coordinates' };
         }
 
-        // 3D move must include z
-        if (z === undefined) {
-            return { success: false, error: 'Missing z coordinate' };
-        }
-
-        // If cell already taken
-        if (this.getCell(x, y, z) !== '') {
-            return { success: false, error: 'Cell occupied' };
-        }
-
         const solo = this.isSoloMode();
-        const symbol = solo ? this.currentTurn : player.symbol;
 
+        // If multiplayer, enforce turn ownership
         if (!solo && player.symbol !== this.currentTurn) {
             return { success: false, error: 'Not your turn' };
         }
 
-        this.setCell(x, y, symbol, z);
-        this.winner = this.checkWinner();
+        // In solo mode, alternate symbols automatically
+        const symbolToPlay = solo ? this.currentTurn : player.symbol;
 
-        if (this.winner) {
-            this.isFinished = true;
-        } else {
-            this.currentTurn = this.currentTurn === 'X' ? 'O' : 'X';
+        if (this.board[z][y][x] !== '') {
+            return { success: false, error: 'Cell already occupied' };
         }
+
+        // Apply move
+        this.board[z][y][x] = symbolToPlay;
+
+        // Toggle turn (solo mode still alternates)
+        this.currentTurn = this.currentTurn === 'X' ? 'O' : 'X';
+
+        const winner = this.checkWinner();
+        if (winner) this.isFinished = true;
 
         return {
             success: true,
+            winner,
+            isFinished: this.isFinished,
+            state: this.serialize(), // always return fresh serialized board
+        };
+    }
+
+    serialize(): GameState<any> {
+        return {
+            id: this.id,
+            createdAt: this.createdAt,
+            board: this.board,
+            players: this.players.map(p => ({ id: p.id, symbol: p.symbol })),
             isFinished: this.isFinished,
             winner: this.winner,
-            state: this.serialize(),
         };
     }
 
@@ -137,12 +150,5 @@ export class ThreeDTicTacToeGame extends TicTacToeGame<string[][][]> {
             }
         }
         return '';
-    }
-
-    override serialize() {
-        return {
-            ...super.serialize(),
-            dimensions: [3, 3, 3],
-        };
     }
 }

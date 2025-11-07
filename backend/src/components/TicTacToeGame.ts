@@ -55,16 +55,31 @@ export abstract class TicTacToeGame<TBoard = string[][]> extends Game<TicTacToeP
      * - Rejects if the game already has two players.
      */
     joinPlayer(clientId: string) {
+        // If the player is already in the game, just return them.
         const existing = this.players.find(p => p.id === clientId);
-        if (existing) return { success: true, player: existing };
+        if (existing) {
+            return { success: true, player: existing };
+        }
 
+        // Game full: can’t join.
         if (this.players.length >= 2) {
             return { success: false, error: 'Game full' };
         }
 
-        const symbol = this.players.some(p => p.symbol === 'X') ? 'O' : 'X';
+        let symbol: 'X' | 'O';
+
+        if (this.players.length === 0) {
+            // Empty game (new or reset) — first player always gets 'X'
+            symbol = 'X';
+        } else {
+            // One player already exists → assign the opposite symbol
+            const existingSymbol = this.players[0].symbol;
+            symbol = existingSymbol === 'X' ? 'O' : 'X';
+        }
+
         const player = new TicTacToePlayer(clientId, symbol);
         this.addPlayer(player);
+
         return { success: true, player };
     }
 

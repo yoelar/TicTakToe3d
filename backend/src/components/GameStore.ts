@@ -59,16 +59,18 @@ export function makeMove(
 
     const result = game.makeMove(player, moveData);
 
-    // If the game’s makeMove returns a short success object, normalize it
     if (!result.success) {
         return { success: false, error: result.error || 'Invalid move' };
     }
 
+    // Always use the live game state, not a stale or partial one
+    const currentState = game.serialize();
+
     return {
         success: true,
-        winner: result.winner || '',
-        isFinished: result.isFinished ?? false,
-        state: result.state ?? game.serialize(),
+        winner: result.winner ?? currentState.winner ?? '',
+        isFinished: result.isFinished ?? currentState.isFinished ?? false,
+        state: currentState,
     };
 }
 

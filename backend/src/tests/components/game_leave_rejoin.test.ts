@@ -10,15 +10,16 @@ describe('GameStore leave and rejoin scenarios', () => {
 
     it('1️⃣ Solo → join → continue play', () => {
         const g1 = createGame('p1');
-        makeMove(g1.gameId, 'p1', { x: 0, y: 0, z: 0 });
+        const s1 = makeMove(g1.gameId, 'p1', { x: 0, y: 0, z: 0 });
 
         const joinRes = joinGame(g1.gameId, 'p2');
         expect(joinRes.success).toBe(true);
         expect(joinRes.player).toBe('O');
 
         const move2 = makeMove(g1.gameId, 'p2', { x: 1, y: 0, z: 0 });
+
         expect(move2.success).toBe(true);
-        expect(move2.state.board[1][0][0]).toBe('O');
+        expect(move2.state.board[0][0][1]).toBe('O');
         expect(move2.isFinished).toBe(false);
     });
 
