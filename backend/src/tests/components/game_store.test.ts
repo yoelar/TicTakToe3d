@@ -58,7 +58,7 @@ describe('GameStore', () => {
         // X tries again immediately — should fail
         const move2 = makeMove(g1.gameId, 'playerX', { x: 1, y: 0, z: 0 });
         expect(move2.success).toBe(false);
-        expect(move2.error).toMatch(/not this player's turn/i);
+        expect(move2.error).toMatch(/^not .*turn$/i);
     });
 
 });

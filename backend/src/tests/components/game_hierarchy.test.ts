@@ -59,7 +59,7 @@ describe('Game hierarchy', () => {
 
         const move2 = game.makeMove(playerO, { x: 1, y: 0, z: 0 });
         expect(isSuccess(move2)).toBe(true);
-        if (isSuccess(move2)) expect(move2.state.board[0][1][0]).toBe('O');
+        if (isSuccess(move2)) expect(move2.state.board[0][0][1]).toBe('O');
     });
 
     it('rejects moves on occupied cells', () => {

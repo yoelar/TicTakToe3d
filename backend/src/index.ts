@@ -1,8 +1,14 @@
+// backend/src/index.ts
 import express, { Request, Response } from 'express';
 import http from 'http';
 import { randomUUID } from 'crypto';
-import { games, createGame, joinGame, makeMove, leaveGame } from './components/GameStore';
-
+import {
+    games,
+    createGame,
+    joinGame,
+    makeMove,
+    leaveGame
+} from './components/GameStore';
 
 export const app = express();
 app.use(express.json());
@@ -14,9 +20,8 @@ app.post('/api/game', (req: Request, res: Response) => {
     const clientId = (req.query.clientId as string) || randomUUID();
     const result = createGame(clientId);
 
-    // If result contains "success" and it's false → treat as failure
-    if ('success' in result && !result.success) {
-        return res.status(400).json({ error: (result as any).error || 'Failed to create game' });
+    if (!result.success) {
+        return res.status(400).json({ error: result.error || 'Failed to create game' });
     }
 
     res.status(200).json(result);
@@ -26,8 +31,8 @@ app.post('/api/game', (req: Request, res: Response) => {
 app.post('/api/game/:id/join', (req: Request, res: Response) => {
     const { id } = req.params;
     const clientId = (req.query.clientId as string) || randomUUID();
-    const result = joinGame(id, clientId);
 
+    const result = joinGame(id, clientId);
     if (!result.success) {
         const status = result.error?.toLowerCase().includes('not found') ? 404 : 400;
         return res.status(status).json({ error: result.error });
@@ -40,31 +45,23 @@ app.post('/api/game/:id/join', (req: Request, res: Response) => {
 app.post('/api/game/:id/move', (req: Request, res: Response) => {
     const { id } = req.params;
     const { player, x, y, z } = req.body;
-    const clientId = req.query.clientId as string | undefined;
-
     const game = games[id];
+
     if (!game) return res.status(404).json({ error: 'Game not found' });
 
-    const players = playersByGame[id];
-    if (!players || players.length === 0)
+    // Try to locate by sign (for API simplicity)
+    const matched = game.getPlayers().find(p => p.symbol === player);
+    const playerId = matched?.id;
+
+    if (!playerId && !game.getPlayers().length)
         return res.status(400).json({ error: 'No players in this game' });
 
-    let foundPlayer = players.find(p => p.sign === player);
-
-    // 🧩 In solo mode, there is only one clientId, so we reuse it for both X and O turns.
-    if (!foundPlayer && game.isSoloMode()) {
-        foundPlayer = players[0];
-    }
-
-    if (!foundPlayer)
-        return res.status(400).json({ error: 'Invalid playerId or sign' });
-
-    const moveResult = game.makeMove(foundPlayer, { x, y, z });
+    const moveResult = makeMove(id, playerId || game.getPlayers()[0].id, { x, y, z });
 
     if (!moveResult.success)
         return res.status(400).json({ error: moveResult.error });
 
-    return res.status(200).json({ state: game.serialize() });
+    return res.status(200).json({ state: moveResult.state });
 });
 
 // ✅ Get current game state
@@ -72,22 +69,19 @@ app.get('/api/game/:id/state', (req: Request, res: Response) => {
     const { id } = req.params;
     const game = games[id];
     if (!game) return res.status(404).json({ error: 'Game not found' });
-
-    res.json(game.serialize());
+    res.status(200).json(game.serialize());
 });
 
 // ✅ Leave game
-// Player leaves a game
 app.post('/api/game/:id/leave', (req: Request, res: Response) => {
     const { id } = req.params;
     const clientId = req.query.clientId as string;
-
-    if (!clientId) {
-        return res.status(400).json({ error: 'Missing clientId' });
-    }
+    if (!clientId) return res.status(400).json({ error: 'Missing clientId' });
 
     const result = leaveGame(id, clientId);
-    return res.status(result.success ? 200 : 400).json(result);
+    if (!result.success) return res.status(400).json({ error: result.error });
+
+    res.status(200).json(result);
 });
 
 // ---------------------------------------------
