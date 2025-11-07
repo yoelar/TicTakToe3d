@@ -72,7 +72,10 @@ export class ThreeDTicTacToeGame extends TicTacToeGame<string[][][]> {
         this.currentTurn = this.currentTurn === 'X' ? 'O' : 'X';
 
         const winner = this.checkWinner();
-        if (winner) this.isFinished = true;
+        if (winner) {
+            this.winner = winner;   
+            this.isFinished = true;
+        }
 
         return {
             success: true,

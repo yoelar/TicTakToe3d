@@ -42,26 +42,69 @@ app.post('/api/game/:id/join', (req: Request, res: Response) => {
 });
 
 // ✅ Make a move
+// --- replace your existing /api/game/:id/move handler with this ---
 app.post('/api/game/:id/move', (req: Request, res: Response) => {
     const { id } = req.params;
-    const { player, x, y, z } = req.body;
+    const { player, x, y, z } = req.body as { player?: string; x?: any; y?: any; z?: any };
+    const clientId = req.query.clientId as string | undefined;
+
     const game = games[id];
+    if (!game) {
+        console.log(`[MOVE] ${id} - rejected: Game not found`);
+        return res.status(404).json({ error: 'Game not found' });
+    }
 
-    if (!game) return res.status(404).json({ error: 'Game not found' });
+    // Defensive parse of coordinates (should be numbers)
+    const xi = Number(x);
+    const yi = Number(y);
+    const zi = Number(z);
 
-    // Try to locate by sign (for API simplicity)
-    const matched = game.getPlayers().find(p => p.symbol === player);
-    const playerId = matched?.id;
+    // Snapshot helpful info
+    const playersSnapshot = game.getPlayers().map(p => ({ id: p.id, symbol: p.symbol }));
+    const currentTurn = (game as any).currentTurn ?? null; // accessor name depends on class, fallback
 
-    if (!playerId && !game.getPlayers().length)
-        return res.status(400).json({ error: 'No players in this game' });
+    console.log(`[MOVE] ${id} Move request by player=${player} coords=(x=${x},y=${y},z=${z}) parsed=(x=${xi},y=${yi},z=${zi})`);
+    console.log(`[MOVE] ${id} Current turn=${currentTurn} Players=${JSON.stringify(playersSnapshot)}`);
 
-    const moveResult = makeMove(id, playerId || game.getPlayers()[0].id, { x, y, z });
+    // Find the player object by symbol or by clientId (solo-mode allow)
+    // Try to locate player by symbol first (API sends { player: 'X' } etc)
+    let foundPlayer = game.getPlayers().find(p => p.symbol === player);
+    if (!foundPlayer && clientId) {
+        // fallback: find by clientId
+        foundPlayer = game.getPlayers().find(p => p.id === clientId);
+    }
+    // Also in solo-mode allow the single player to act for both symbols
+    if (!foundPlayer && (game as any).getPlayers().length === 1) {
+        foundPlayer = (game as any).getPlayers()[0];
+    }
 
-    if (!moveResult.success)
-        return res.status(400).json({ error: moveResult.error });
+    if (!foundPlayer) {
+        console.log(`[MOVE] ${id} rejected: invalid player (player=${player} clientId=${clientId})`);
+        return res.status(400).json({
+            error: 'Invalid player or not part of this game',
+            debug: { currentTurn, players: playersSnapshot }
+        });
+    }
 
-    return res.status(200).json({ state: moveResult.state });
+    // Make the move — delegate to game object
+    const moveResult = game.makeMove(foundPlayer, { x: xi, y: yi, z: zi });
+
+    if (!moveResult.success) {
+        console.log(`[MOVE] ${id} rejected: ${moveResult.error}`);
+        return res.status(400).json({
+            error: moveResult.error,
+            debug: {
+                currentTurn,
+                players: playersSnapshot,
+                coords: { x: xi, y: yi, z: zi },
+            }
+        });
+    }
+
+    // success
+    const state = game.serialize();
+    console.log(`[MOVE] ${id} accepted. Next turn: ${(game as any).currentTurn}`);
+    return res.status(200).json({ state });
 });
 
 // ✅ Get current game state

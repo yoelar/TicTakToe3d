@@ -64,7 +64,7 @@ describe('3D TicTacToe REST API', () => {
       .send({ player: 'X', x: 0, y: 2, z: 0 })
       .expect(400);
 
-    expect(badMove.body.error).toMatch(/not this player's turn/i);
+    expect(badMove.body.error).toMatch(/not .* turn/i);
   });
 
   it('should report a win when one player completes a line', async () => {

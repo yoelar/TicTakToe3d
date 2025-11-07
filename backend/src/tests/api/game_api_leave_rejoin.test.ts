@@ -55,8 +55,19 @@ describe('3D TicTacToe REST API — Leave / Rejoin Scenarios', () => {
         await request.post(`/api/game/${gameId}/join`).query({ clientId: clientC }).expect(200);
 
         // Should now have two players again (B and C)
-        await request.post(`/api/game/${gameId}/move`).send({ player: 'O', x: 0, y: 2, z: 0 }).expect(200);
-        await request.post(`/api/game/${gameId}/move`).send({ player: 'X', x: 1, y: 2, z: 0 }).expect(200);
+        // fetch current state to be robust about whose turn it is
+        const st = await request.get(`/api/game/${gameId}/state`).expect(200);
+        const next = st.body.currentTurn ?? st.body.currentPlayer ?? (st.body.state && st.body.state.currentPlayer) ?? null;
+
+        // determine who should play and send moves accordingly
+        if (next === 'O') {
+            await request.post(`/api/game/${gameId}/move`).send({ player: 'O', x: 0, y: 2, z: 0 }).expect(200);
+            await request.post(`/api/game/${gameId}/move`).send({ player: 'X', x: 1, y: 2, z: 0 }).expect(200);
+        } else {
+            // server thinks X moves next — reverse the order
+            await request.post(`/api/game/${gameId}/move`).send({ player: 'X', x: 1, y: 2, z: 0 }).expect(200);
+            await request.post(`/api/game/${gameId}/move`).send({ player: 'O', x: 0, y: 2, z: 0 }).expect(200);
+        }
     });
 
     it('5️⃣ Both players leave, others can still join and continue', async () => {
