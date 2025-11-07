@@ -1,5 +1,31 @@
-import { TicTacToePlayer } from '../../components/TicTacToePlayer';
 import { ThreeDTicTacToeGame } from '../../components/ThreeDTicTacToeGame';
+import { TicTacToePlayer } from '../../components/TicTacToePlayer';
+
+// --- Proper discriminated type guards ---
+type SuccessResult = {
+    success: true;
+    winner: '' | 'X' | 'O';
+    isFinished: boolean;
+    state: {
+        id: string;
+        createdAt: Date;
+        players: { id: string; symbol: 'X' | 'O' }[];
+        board: any;
+        isFinished: boolean;
+        winner: '' | 'X' | 'O';
+    };
+};
+
+type ErrorResult = { success: false; error: string };
+
+function isSuccess(result: any): result is SuccessResult {
+    return result && result.success === true;
+}
+
+function isError(result: any): result is ErrorResult {
+    return result && result.success === false;
+}
+// ----------------------------------------
 
 describe('Game hierarchy', () => {
     let game: ThreeDTicTacToeGame;
@@ -7,22 +33,18 @@ describe('Game hierarchy', () => {
     let playerO: TicTacToePlayer;
 
     beforeEach(() => {
-        playerX = new TicTacToePlayer('playerX', 'X');
-        playerO = new TicTacToePlayer('playerO', 'O');
         game = new ThreeDTicTacToeGame('test-game');
-        game.addPlayer(playerX);
+
+        const joinX = game.joinPlayer('p1');
+        if (!joinX.success) throw new Error('Failed to join player X');
+        playerX = joinX.player!;
+
+        const joinO = game.joinPlayer('p2');
+        if (!joinO.success) throw new Error('Failed to join player O');
+        playerO = joinO.player!;
     });
 
-    it('starts in solo mode', () => {
-        expect(game.isSoloMode()).toBe(true);
-    });
-
-    it('adds a second player and switches out of solo mode', () => {
-        game.addPlayer(playerO);
-        expect(game.isSoloMode()).toBe(false);
-    });
-
-    it('initializes an empty 3󫢫 board', () => {
+    it('starts with empty 3脳3脳3 board', () => {
         const board = game.getBoard();
         expect(board.length).toBe(3);
         expect(board[0].length).toBe(3);
@@ -30,31 +52,54 @@ describe('Game hierarchy', () => {
         expect(board.flat(2).every(cell => cell === '')).toBe(true);
     });
 
-    it('allows a valid move from the current player', () => {
-        const result = game.makeMove(playerX, 0, 0, 0);
-        expect(result.success).toBe(true);
-        expect(game.getBoard()[0][0][0]).toBe('X');
+    it('allows valid moves and alternates turns', () => {
+        const move1 = game.makeMove(playerX, { x: 0, y: 0, z: 0 });
+        expect(isSuccess(move1)).toBe(true);
+        if (isSuccess(move1)) expect(move1.state.board[0][0][0]).toBe('X');
+
+        const move2 = game.makeMove(playerO, { x: 1, y: 0, z: 0 });
+        expect(isSuccess(move2)).toBe(true);
+        if (isSuccess(move2)) expect(move2.state.board[0][1][0]).toBe('O');
     });
 
-    it('rejects move on occupied cell', () => {
-        game.makeMove(playerX, 0, 0, 0);
-        const result = game.makeMove(playerX, 0, 0, 0);
-        expect(result.success).toBe(false);
+    it('rejects moves on occupied cells', () => {
+        const move1 = game.makeMove(playerX, { x: 0, y: 0, z: 0 });
+        expect(isSuccess(move1)).toBe(true);
+
+        const move2 = game.makeMove(playerO, { x: 0, y: 0, z: 0 });
+        expect(isError(move2)).toBe(true);
+        if (isError(move2)) {
+            expect(move2.error).toMatch(/occupied/i);
+        }
     });
 
-    it('alternates turns in two-player mode', () => {
-        game.addPlayer(playerO);
-        game.makeMove(playerX, 0, 0, 0);
-        expect(game.getCurrentPlayer()).toBe('O');
+    it('rejects moves out of turn', () => {
+        const move1 = game.makeMove(playerX, { x: 0, y: 0, z: 0 });
+        expect(isSuccess(move1)).toBe(true);
+
+        const move2 = game.makeMove(playerX, { x: 1, y: 0, z: 0 }); // X again
+        expect(isError(move2)).toBe(true);
+        if (isError(move2)) {
+            expect(move2.error).toMatch(/turn/i);
+        }
     });
 
     it('detects a win across a row', () => {
-        game.addPlayer(playerO);
-        game.makeMove(playerX, 0, 0, 0);
-        game.makeMove(playerO, 0, 1, 0);
-        game.makeMove(playerX, 1, 0, 0);
-        game.makeMove(playerO, 1, 1, 0);
-        game.makeMove(playerX, 2, 0, 0);
-        expect(game.getWinner()).toBe('X');
+        // X: (0,0,0)
+        game.makeMove(playerX, { x: 0, y: 0, z: 0 });
+        // O: (0,1,0)
+        game.makeMove(playerO, { x: 0, y: 1, z: 0 });
+        // X: (1,0,0)
+        game.makeMove(playerX, { x: 1, y: 0, z: 0 });
+        // O: (1,1,0)
+        game.makeMove(playerO, { x: 1, y: 1, z: 0 });
+        // X: (2,0,0) 鈫� win!
+        const move5 = game.makeMove(playerX, { x: 2, y: 0, z: 0 });
+
+        expect(isSuccess(move5)).toBe(true);
+        if (isSuccess(move5)) {
+            expect(move5.winner).toBe('X');
+            expect(move5.state.isFinished).toBe(true);
+        }
     });
 });

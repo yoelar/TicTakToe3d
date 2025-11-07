@@ -1,9 +1,12 @@
 ﻿import { Game } from './Game';
 import { TicTacToePlayer } from './TicTacToePlayer';
+import { MoveResult } from './types';
 
 export abstract class TicTacToeGame<TBoard = string[][]> extends Game<TicTacToePlayer> {
     protected board!: TBoard;
     protected currentTurn: 'X' | 'O' = 'X';
+    public isFinished = false;
+    protected winner: 'X' | 'O' | '' = '';
 
     constructor(id: string, board?: TBoard) {
         super(id);
@@ -22,39 +25,28 @@ export abstract class TicTacToeGame<TBoard = string[][]> extends Game<TicTacToeP
     protected getCell(x: number, y: number, z?: number): string {
         return this.board[y][x];
     }
+
+    /** Validate coordinates in subclass (2D or 3D) */
     abstract isValidCoordinates(x: number, y: number, z?: number): boolean;
 
-    makeMove(player: TicTacToePlayer, moveData: { x: number; y: number; z?: number }) {
-        const { x, y, z = 0 } = moveData;
+    /** Optional winner check — implemented by subclass */
+    protected abstract checkWinner(): 'X' | 'O' | '';
 
-        if (!this.isValidCoordinates(x, y, z)) {
-            return { success: false, error: 'Invalid coordinates' };
-        }
-
-        if (this.getCell(x, y, z) !== '') {
-            return { success: false, error: 'Cell already occupied' };
-        }
-
-        if (!this.isSoloMode() && this.currentTurn !== player.symbol) {
-            return { success: false, error: 'Not your turn' };
-        }
-
-        const symbolToPlace = this.isSoloMode() ? this.currentTurn : player.symbol;
-
-        // ✅ Call with z even if 2D version ignores it
-        this.setCell(x, y, symbolToPlace, z);
-
-        // Toggle turn (both solo and multi)
-        this.currentTurn = this.currentTurn === 'X' ? 'O' : 'X';
-
-        return { success: true };
-    }
+    /**
+     * Attempt to make a move for a given player.
+     * Returns MoveResult (discriminated union).
+     */
+    /** Must return a MoveResult (success or error) */
+    abstract makeMove(
+        player: TicTacToePlayer,
+        moveData: { x: number; y: number; z?: number }
+    ): MoveResult;
 
     /** Add or rejoin a player by client ID */
     joinPlayer(clientId: string) {
         // Existing player rejoining?
         const existing = this.players.find(p => p.id === clientId);
-        if (existing) return { success: true, player: existing.symbol };
+        if (existing) return { success: true, player: existing };
 
         // Max two players
         if (this.players.length >= 2) {
@@ -65,7 +57,7 @@ export abstract class TicTacToeGame<TBoard = string[][]> extends Game<TicTacToeP
         const player = new TicTacToePlayer(clientId, symbol);
         this.addPlayer(player);
 
-        return { success: true, player: symbol };
+        return { success: true, player };
     }
 
     /** Remove a player by either object or ID */
@@ -80,6 +72,7 @@ export abstract class TicTacToeGame<TBoard = string[][]> extends Game<TicTacToeP
             : { success: false, error: 'Player not found' };
     }
 
+    /** Serialize full state for frontend or persistence */
     serialize() {
         return {
             id: this.id,
@@ -87,7 +80,20 @@ export abstract class TicTacToeGame<TBoard = string[][]> extends Game<TicTacToeP
             players: this.players.map(p => ({ id: p.id, symbol: p.symbol })),
             board: this.board,
             isFinished: this.isFinished,
+            winner: this.winner,
         };
     }
 
+    /** Accessors for tests / consumers */
+    getBoard() {
+        return this.board;
+    }
+
+    getWinner() {
+        return this.winner;
+    }
+
+    getCurrentTurn() {
+        return this.currentTurn;
+    }
 }
