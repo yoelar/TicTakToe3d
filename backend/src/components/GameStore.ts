@@ -1,44 +1,52 @@
 ﻿import { ThreeDTicTacToeGame } from './ThreeDTicTacToeGame';
 import { TicTacToePlayer } from './TicTacToePlayer';
-import { randomUUID } from 'crypto';
 
-// Store all active games
 export const games: Record<string, ThreeDTicTacToeGame> = {};
 
-// --- Create a new game ---
+/** Create a new 3D Tic Tac Toe game with the first player */
 export function createGame(clientId: string) {
-    const gameId = randomUUID();
+    const gameId = `game-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const game = new ThreeDTicTacToeGame(gameId);
-
-    // Player X always starts
-    const player = new TicTacToePlayer(clientId, 'X');
-    game.addPlayer(player);
     games[gameId] = game;
+
+    const joinRes = game.joinPlayer(clientId);
+    if (!joinRes.success || !joinRes.player) {
+        return { success: false, error: 'Failed to create or join game' };
+    }
 
     return {
         success: true,
         gameId,
-        player: 'X' as const,
-        playerId: clientId,
+        player: joinRes.player.symbol,
+        state: game.serialize(),
     };
 }
 
-// --- Join an existing game ---
+/** Player joins an existing game */
 export function joinGame(gameId: string, clientId: string) {
     const game = games[gameId];
     if (!game) {
         return { success: false, error: 'Game not found' };
     }
 
-    // `joinPlayer` now comes from TicTacToeGame base class
     const result = game.joinPlayer(clientId);
-    return result.success
-        ? { success: true, player: result.player, playerId: clientId }
-        : { success: false, error: result.error };
+    if (!result.success || !result.player) {
+        return { success: false, error: result.error || 'Failed to join game' };
+    }
+
+    return {
+        success: true,
+        player: result.player.symbol,
+        state: game.serialize(),
+    };
 }
 
-// --- Make a move ---
-export function makeMove(gameId: string, clientId: string, moveData: any) {
+/** Player makes a move in a game */
+export function makeMove(
+    gameId: string,
+    clientId: string,
+    moveData: { x: number; y: number; z?: number }
+) {
     const game = games[gameId];
     if (!game) {
         return { success: false, error: 'Game not found' };
@@ -46,24 +54,42 @@ export function makeMove(gameId: string, clientId: string, moveData: any) {
 
     const player = game.getPlayers().find(p => p.id === clientId);
     if (!player) {
-        return { success: false, error: 'Invalid playerId' };
+        return { success: false, error: 'Player not in game' };
     }
 
     const result = game.makeMove(player, moveData);
+
+    // If the game’s makeMove returns a short success object, normalize it
+    if (!result.success) {
+        return { success: false, error: result.error || 'Invalid move' };
+    }
+
     return {
-        success: result.success,
-        error: result.error,
-        state: game.serialize(),
+        success: true,
+        winner: result.winner || '',
+        isFinished: result.isFinished ?? false,
+        state: result.state ?? game.serialize(),
     };
 }
 
-// --- Leave a game ---
+/** Player leaves an existing game */
 export function leaveGame(gameId: string, clientId: string) {
     const game = games[gameId];
     if (!game) {
         return { success: false, error: 'Game not found' };
     }
 
-    // `removePlayer` now supports both string and player arguments
-    return game.removePlayer(clientId);
+    const player = game.getPlayers().find(p => p.id === clientId);
+    if (!player) {
+        return { success: false, error: 'Player not found' };
+    }
+
+    const result = game.removePlayer(player);
+
+    return {
+        success: result.success,
+        error: result.error,
+        remaining: game.getPlayers().map(p => ({ id: p.id, symbol: p.symbol })),
+        state: game.serialize(),
+    };
 }

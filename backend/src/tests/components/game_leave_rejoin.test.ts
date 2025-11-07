@@ -19,6 +19,7 @@ describe('GameStore leave and rejoin scenarios', () => {
         const move2 = makeMove(g1.gameId, 'p2', { x: 1, y: 0, z: 0 });
         expect(move2.success).toBe(true);
         expect(move2.state.board[1][0][0]).toBe('O');
+        expect(move2.isFinished).toBe(false);
     });
 
     it('2️⃣ Two players → player2 leaves → player1 continues solo', () => {
@@ -35,6 +36,7 @@ describe('GameStore leave and rejoin scenarios', () => {
         const move2 = makeMove(g1.gameId, 'p1', { x: 1, y: 1, z: 1 });
         expect(move2.success).toBe(true);
         expect(move2.state.board[1][1][1]).toBe('O'); // alternates automatically in solo mode
+        expect(move2.isFinished).toBe(false);
     });
 
     it('3️⃣ Player1 leaves → player2 continues solo', () => {
@@ -49,6 +51,7 @@ describe('GameStore leave and rejoin scenarios', () => {
         const move = makeMove(g1.gameId, 'p2', { x: 1, y: 1, z: 1 });
         expect(move.success).toBe(true);
         expect(move.state.board[1][1][1]).toBe('O');
+        expect(move.isFinished).toBe(false);
     });
 
     it('4️⃣ One leaves, third joins → game continues', () => {
@@ -67,6 +70,7 @@ describe('GameStore leave and rejoin scenarios', () => {
 
         const move = makeMove(g1.gameId, 'p3', { x: 0, y: 0, z: 0 });
         expect(move.success).toBe(true);
+        expect(move.isFinished).toBe(false);
     });
 
     it('5️⃣ Both leave, later others can join', () => {

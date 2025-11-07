@@ -41,66 +41,41 @@ export class ThreeDTicTacToeGame extends TicTacToeGame<string[][][]> {
      * Make a move in the 3D grid.
      * Includes validation, turn order, and winner detection.
      */
-    override makeMove(
-        player: TicTacToePlayer,
-        moveData: { x: number; y: number; z?: number }
-    ): MoveResult {
-        const { x, y, z } = moveData;
-
-        // ✅ Reject missing z coordinate
-        if (z === undefined || z === null) {
-            return { success: false, error: 'Missing z coordinate for 3D move' };
-        }
-
-        if (this.isFinished) {
-            return { success: false, error: 'Game already finished' };
-        }
-
-        const currentPlayer = this.players.find(p => p.id === player.id);
-        if (!currentPlayer) {
-            return { success: false, error: 'Player not in game' };
-        }
-
-        if (!this.isSoloMode() && currentPlayer.symbol !== this.currentTurn) {
-            return { success: false, error: 'Not your turn' };
-        }
-
+    makeMove(player: TicTacToePlayer, { x, y, z }: { x: number; y: number; z?: number }): MoveResult {
         if (!this.isValidCoordinates(x, y, z)) {
             return { success: false, error: 'Invalid coordinates' };
         }
 
+        // 3D move must include z
+        if (z === undefined) {
+            return { success: false, error: 'Missing z coordinate' };
+        }
+
+        // If cell already taken
         if (this.getCell(x, y, z) !== '') {
-            return { success: false, error: 'Cell already occupied' };
+            return { success: false, error: 'Cell occupied' };
         }
 
-        // Make move
-        this.setCell(x, y, currentPlayer.symbol, z);
+        const solo = this.isSoloMode();
+        const symbol = solo ? this.currentTurn : player.symbol;
 
-        // Winner check
-        const winner = this.checkWinner();
-        if (winner) {
+        if (!solo && player.symbol !== this.currentTurn) {
+            return { success: false, error: 'Not your turn' };
+        }
+
+        this.setCell(x, y, symbol, z);
+        this.winner = this.checkWinner();
+
+        if (this.winner) {
             this.isFinished = true;
-            this.winner = winner;
         } else {
-            // Draw check
-            const isFull = this.board.every(plane =>
-                plane.every(row => row.every(cell => cell !== ''))
-            );
-            if (isFull) {
-                this.isFinished = true;
-            }
-        }
-
-        // Switch turns if game not finished
-        if (!this.isFinished) {
             this.currentTurn = this.currentTurn === 'X' ? 'O' : 'X';
         }
 
-        // ✅ Always return full MoveResult
         return {
             success: true,
-            winner: this.winner,
             isFinished: this.isFinished,
+            winner: this.winner,
             state: this.serialize(),
         };
     }
