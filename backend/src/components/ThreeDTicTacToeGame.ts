@@ -147,9 +147,14 @@ export class ThreeDTicTacToeGame extends TicTacToeGame<string[][][]> {
     /** Winner detection using cached winning lines */
     protected override checkWinner(): 'X' | 'O' | '' {
         for (const line of this.winningLines) {
-            const symbols = line.map(([x, y, z]) => this.board[z][y][x]);
-            if (symbols[0] && symbols.every(s => s === symbols[0])) {
-                return symbols[0] as 'X' | 'O';
+            const [[x1, y1, z1], [x2, y2, z2], [x3, y3, z3]] = line;
+            const s1 = this.board[z1][y1][x1];
+            if (!s1) continue; // empty cell, can't form a line
+            if (
+                s1 === this.board[z2][y2][x2] &&
+                s1 === this.board[z3][y3][x3]
+            ) {
+                return s1 as 'X' | 'O';
             }
         }
         return '';
