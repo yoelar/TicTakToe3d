@@ -9,6 +9,8 @@ import {
     makeMove,
     leaveGame
 } from './components/GameStore';
+import { getLogger } from './logger';
+const log = getLogger('API');
 
 export const app = express();
 app.use(express.json());
@@ -21,9 +23,11 @@ app.post('/api/game', (req: Request, res: Response) => {
     const result = createGame(clientId);
 
     if (!result.success) {
+        log.warn({ clientId, error: result.error }, 'Failed to create game');
         return res.status(400).json({ error: result.error || 'Failed to create game' });
     }
 
+    log.info({ gameId: result.gameId, clientId }, 'Game created');
     res.status(200).json(result);
 });
 
@@ -35,14 +39,15 @@ app.post('/api/game/:id/join', (req: Request, res: Response) => {
     const result = joinGame(id, clientId);
     if (!result.success) {
         const status = result.error?.toLowerCase().includes('not found') ? 404 : 400;
+        log.warn({ gameId: id, clientId, error: result.error }, 'Join failed');
         return res.status(status).json({ error: result.error });
     }
 
+    log.info({ gameId: id, clientId }, 'Player joined game');
     res.status(200).json(result);
 });
 
 // ✅ Make a move
-// --- replace your existing /api/game/:id/move handler with this ---
 app.post('/api/game/:id/move', (req: Request, res: Response) => {
     const { id } = req.params;
     const { player, x, y, z } = req.body as { player?: string; x?: any; y?: any; z?: any };
@@ -50,60 +55,59 @@ app.post('/api/game/:id/move', (req: Request, res: Response) => {
 
     const game = games[id];
     if (!game) {
-        console.log(`[MOVE] ${id} - rejected: Game not found`);
+        log.error({ gameId: id }, 'Move rejected: Game not found');
         return res.status(404).json({ error: 'Game not found' });
     }
 
-    // Defensive parse of coordinates (should be numbers)
     const xi = Number(x);
     const yi = Number(y);
     const zi = Number(z);
 
-    // Snapshot helpful info
     const playersSnapshot = game.getPlayers().map(p => ({ id: p.id, symbol: p.symbol }));
-    const currentTurn = (game as any).currentTurn ?? null; // accessor name depends on class, fallback
+    const currentTurn = (game as any).currentTurn ?? null;
 
-    console.log(`[MOVE] ${id} Move request by player=${player} coords=(x=${x},y=${y},z=${z}) parsed=(x=${xi},y=${yi},z=${zi})`);
-    console.log(`[MOVE] ${id} Current turn=${currentTurn} Players=${JSON.stringify(playersSnapshot)}`);
+    log.debug({
+        gameId: id,
+        player,
+        coords: { x, y, z },
+        parsed: { x: xi, y: yi, z: zi },
+        currentTurn,
+        players: playersSnapshot
+    }, 'Move request received');
 
-    // Find the player object by symbol or by clientId (solo-mode allow)
-    // Try to locate player by symbol first (API sends { player: 'X' } etc)
     let foundPlayer = game.getPlayers().find(p => p.symbol === player);
     if (!foundPlayer && clientId) {
-        // fallback: find by clientId
         foundPlayer = game.getPlayers().find(p => p.id === clientId);
     }
-    // Also in solo-mode allow the single player to act for both symbols
     if (!foundPlayer && (game as any).getPlayers().length === 1) {
         foundPlayer = (game as any).getPlayers()[0];
     }
 
     if (!foundPlayer) {
-        console.log(`[MOVE] ${id} rejected: invalid player (player=${player} clientId=${clientId})`);
+        log.warn({ gameId: id, player, clientId }, 'Move rejected: invalid player');
         return res.status(400).json({
             error: 'Invalid player or not part of this game',
             debug: { currentTurn, players: playersSnapshot }
         });
     }
 
-    // Make the move — delegate to game object
     const moveResult = game.makeMove(foundPlayer, { x: xi, y: yi, z: zi });
 
     if (!moveResult.success) {
-        console.log(`[MOVE] ${id} rejected: ${moveResult.error}`);
+        log.warn({
+            gameId: id,
+            player: foundPlayer.id,
+            coords: { x: xi, y: yi, z: zi },
+            error: moveResult.error
+        }, 'Move rejected');
         return res.status(400).json({
             error: moveResult.error,
-            debug: {
-                currentTurn,
-                players: playersSnapshot,
-                coords: { x: xi, y: yi, z: zi },
-            }
+            debug: { currentTurn, players: playersSnapshot, coords: { x: xi, y: yi, z: zi } }
         });
     }
 
-    // success
     const state = game.serialize();
-    console.log(`[MOVE] ${id} accepted. Next turn: ${(game as any).currentTurn}`);
+    log.info({ gameId: id, nextTurn: (game as any).currentTurn }, 'Move accepted');
     return res.status(200).json({ state });
 });
 
@@ -111,7 +115,11 @@ app.post('/api/game/:id/move', (req: Request, res: Response) => {
 app.get('/api/game/:id/state', (req: Request, res: Response) => {
     const { id } = req.params;
     const game = games[id];
-    if (!game) return res.status(404).json({ error: 'Game not found' });
+    if (!game) {
+        log.warn({ gameId: id }, 'Get state: Game not found');
+        return res.status(404).json({ error: 'Game not found' });
+    }
+    log.debug({ gameId: id }, 'Returning game state');
     res.status(200).json(game.serialize());
 });
 
@@ -119,11 +127,18 @@ app.get('/api/game/:id/state', (req: Request, res: Response) => {
 app.post('/api/game/:id/leave', (req: Request, res: Response) => {
     const { id } = req.params;
     const clientId = req.query.clientId as string;
-    if (!clientId) return res.status(400).json({ error: 'Missing clientId' });
+    if (!clientId) {
+        log.warn({ gameId: id }, 'Leave failed: Missing clientId');
+        return res.status(400).json({ error: 'Missing clientId' });
+    }
 
     const result = leaveGame(id, clientId);
-    if (!result.success) return res.status(400).json({ error: result.error });
+    if (!result.success) {
+        log.warn({ gameId: id, clientId, error: result.error }, 'Leave failed');
+        return res.status(400).json({ error: result.error });
+    }
 
+    log.info({ gameId: id, clientId }, 'Player left game');
     res.status(200).json(result);
 });
 
@@ -134,6 +149,6 @@ export const server = http.createServer(app);
 const PORT = process.env.PORT || 4000;
 if (require.main === module) {
     server.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+        log.info(`Server running on port ${PORT}`);
     });
 }
