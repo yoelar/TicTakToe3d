@@ -1,5 +1,6 @@
-﻿import React, { useState } from 'react';
-import '../styles/board.css';
+﻿// src/components/GameBoard.tsx
+import React, { useState } from 'react';
+import '../styles/layout.css'; // updated CSS name
 
 type Symbol = 'X' | 'O' | '';
 
@@ -15,8 +16,7 @@ const GameBoard: React.FC = () => {
     const [current, setCurrent] = useState<Symbol>('X');
 
     const handleCellClick = (x: number, y: number, z: number) => {
-        if (board[z][y][x] !== '') return;
-
+        if (board[z][y][x] !== '') return; // already occupied
         const newBoard = structuredClone(board);
         newBoard[z][y][x] = current;
         setBoard(newBoard);
@@ -31,7 +31,7 @@ const GameBoard: React.FC = () => {
                         row.map((cell, x) => (
                             <div
                                 key={`${x}-${y}-${z}`}
-                                className="board-cell"
+                                className={`cell ${cell}`} // <--- add the cell's symbol class
                                 onClick={() => handleCellClick(x, y, z)}
                             >
                                 {cell}

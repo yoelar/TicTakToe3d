@@ -1,125 +1,87 @@
 /* src/styles/layout.css */
 
-:root {
-    --color-bg: #f9fafb;
-    --color-text: #222;
-    --color-accent: #2563eb;
-    --header-height: 64px;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --board-gap: 2rem;
-}
-
-body {
-  margin: 0;
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-/* Page container */
-.app-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Header area */
-.header {
-  height: var(--header-height);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: white;
-  padding: 0 1rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-/* Main game area */
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-/* Responsive tweaks */
-@media (min-width: 768px) {
-  .main-content {
-    padding: 2rem;
-  }
-}
-
-/* Footer (optional) */
-.footer {
-  text-align: center;
-  padding: 1rem;
-  color: #666;
-  font-size: 0.875rem;
-}
-/* layout.css */
-
+/* === Global === */
 .board-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
+    gap: 1.5rem;
+    padding: 1rem;
 }
 
-/* Each 2D layer of the 3D board */
+/* === Each 3×3 Layer === */
 .board-layer {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 6px;
-    width: 100%;
-    aspect-ratio: 1 / 1; /* always square */
+    width: 90vw;
+    max-width: 300px;
+    aspect-ratio: 1; /* keeps each layer perfectly square */
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 6px;
+    transition: transform 0.2s ease;
 }
-/* Cells */
+
+    .board-layer:hover {
+        transform: scale(1.03);
+    }
+
+/* === Each Cell === */
 .cell {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
-    border: 2px solid #ddd;
-    background: white;
-    border-radius: 8px;
+    font-size: 2.2rem;
+    font-weight: 600;
+    background-color: #1f1f1f;
+    border: 2px solid #333;
+    border-radius: 10%;
     cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
+    user-select: none;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+    aspect-ratio: 1; /* each cell always a perfect square */
 }
 
     .cell:hover {
-        background: #f2f2f2;
-        transform: scale(1.05);
+        background-color: #333;
     }
 
-/* 💻 On wide screens, arrange layers horizontally */
-/* ----- RESPONSIVE ADJUSTMENT ----- */
+    .cell:active {
+        transform: scale(0.95);
+    }
 
-/* For wider screens, place the 3 layers side-by-side */
-@media (min-width: 768px) {
+    .cell.X {
+        color: #3fa9f5;
+    }
+
+    .cell.O {
+        color: #f54291;
+    }
+
+/* === Responsive Adjustments === */
+
+/* Medium to large screens: layers side by side */
+@media (min-width: 800px) {
     .board-container {
         flex-direction: row;
-        align-items: flex-start;
         justify-content: center;
+        align-items: flex-start;
     }
 
-.board-layer {
-        width: 200px;
-    }
-}
-/* 🖥️ On very wide screens, slightly rotate layers for 3D feel */
-@media (min-width: 1200px) {
     .board-layer {
-        transform: rotateX(10deg) rotateY(-8deg);
-        transform-origin: center;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+        width: 220px;
+        max-width: none;
     }
 }
 
+/* Very large screens: more spacing and stable alignment */
+@media (min-width: 1200px) {
+    .board-container {
+        gap: 3rem;
+    }
+
+    .board-layer {
+        width: 250px;
+    }
+}
