@@ -46,10 +46,8 @@ describe('Game hierarchy', () => {
 
     it('starts with empty 3×3×3 board', () => {
         const board = game.getBoard();
-        expect(board.length).toBe(3);
-        expect(board[0].length).toBe(3);
-        expect(board[0][0].length).toBe(3);
-        expect(board.flat(2).every(cell => cell === '')).toBe(true);
+        expect(board.getSize()).toBe(3);
+        expect(board.toJSON().flat(2).every(c => c === '')).toBe(true);
     });
 
     it('allows valid moves and alternates turns', () => {

@@ -86,7 +86,7 @@ export function leaveGame(gameId: string, clientId: string) {
         return { success: false, error: 'Player not found' };
     }
 
-    const result = game.removePlayer(player);
+    const result = game.removePlayer(player.id);
 
     return {
         success: result.success,

@@ -31,7 +31,7 @@ describe('GameStore leave and rejoin scenarios', () => {
         // simulate player2 leaving
         const game = games[g1.gameId];
         const p2 = game.getPlayers().find(p => p.id === 'p2')!;
-        game.removePlayer(p2);
+        game.removePlayer(p2.id);
 
         // p1 can continue solo
         const move2 = makeMove(g1.gameId, 'p1', { x: 1, y: 1, z: 1 });
@@ -47,7 +47,7 @@ describe('GameStore leave and rejoin scenarios', () => {
 
         const game = games[g1.gameId];
         const p1 = game.getPlayers().find(p => p.id === 'p1')!;
-        game.removePlayer(p1);
+        game.removePlayer(p1.id);
 
         const move = makeMove(g1.gameId, 'p2', { x: 1, y: 1, z: 1 });
         expect(move.success).toBe(true);
@@ -62,7 +62,7 @@ describe('GameStore leave and rejoin scenarios', () => {
         // player1 leaves
         const game = games[g1.gameId];
         const p1 = game.getPlayers().find(p => p.id === 'p1')!;
-        game.removePlayer(p1);
+        game.removePlayer(p1.id);
 
         // player3 joins — should get X
         const join3 = joinGame(g1.gameId, 'p3');
@@ -81,8 +81,8 @@ describe('GameStore leave and rejoin scenarios', () => {
 
         const p1 = game.getPlayers().find(p => p.id === 'p1')!;
         const p2 = game.getPlayers().find(p => p.id === 'p2')!;
-        game.removePlayer(p1);
-        game.removePlayer(p2);
+        game.removePlayer(p1.id);
+        game.removePlayer(p2.id);
 
         const join3 = joinGame(g1.gameId, 'p3');
         expect(join3.success).toBe(true);

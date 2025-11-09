@@ -1,79 +1,59 @@
-﻿import { TicTacToeGame } from './TicTacToeGame';
+﻿// backend/src/components/ThreeDTicTacToeGame.ts
+import { TicTacToeGame } from './TicTacToeGame';
 import { TicTacToePlayer } from './TicTacToePlayer';
 import { MoveResult, GameState } from './types';
+import { Board3D } from './board/Board3D';
+import { WinnerChecker3D } from './board/WinnerChecker3D';
 
 /**
- * 3D TicTacToe implementation (3×3×3 cube).
- * Supports caching of all winning line coordinates for efficiency.
+ * Concrete 3D TicTacToe game logic.
+ * Uses Board3D for board management and WinnerChecker3D for win detection.
+ * Player and turn logic are handled by TwoPlayerSession (via TicTacToeGame).
  */
-export class ThreeDTicTacToeGame extends TicTacToeGame<string[][][]> {
-    private readonly winningLines: [number, number, number][][];
+export class ThreeDTicTacToeGame extends TicTacToeGame<Board3D> {
+    private readonly checker: WinnerChecker3D;
 
     constructor(id: string) {
-        const board = Array.from({ length: 3 }, () =>
-            Array.from({ length: 3 }, () => Array(3).fill(''))
-        );
+        const board = new Board3D();
         super(id, board);
-        this.winningLines = this.generateWinningLines();
-    }
-
-    /** Validate x, y, z coordinates (all integers within 0–2) */
-    override isValidCoordinates(x: number, y: number, z?: number): boolean {
-        return (
-            Number.isInteger(x) &&
-            Number.isInteger(y) &&
-            Number.isInteger(z) &&
-            x >= 0 && x < 3 &&
-            y >= 0 && y < 3 &&
-            z! >= 0 && z! < 3
-        );
-    }
-
-    protected setCell(x: number, y: number, symbol: string, z?: number): void {
-        // Correct 3D indexing: [z][y][x]
-        if (z === undefined) return;
-        (this.board as any)[z][y][x] = symbol;
-    }
-
-    protected getCell(x: number, y: number, z?: number): string {
-        if (z === undefined) return '';
-        return (this.board as any)[z][y][x];
+        this.checker = new WinnerChecker3D(board);
     }
 
     makeMove(player: TicTacToePlayer, moveData: { x: number; y: number; z?: number }): MoveResult {
         const { x, y, z } = moveData;
 
         if (z === undefined) {
-            return { success: false, error: 'Missing z coordinate for 3D move' };
+            return { success: false, error: 'Missing z coordinate' };
         }
 
-        if (!this.isValidCoordinates(x, y, z)) {
+        if (!this.board.isValid(x, y, z)) {
             return { success: false, error: 'Invalid coordinates' };
         }
 
+        // Delegate solo and turn logic to session
         const solo = this.isSoloMode();
+        const currentTurn = this.currentTurn;
 
-        // If multiplayer, enforce turn ownership
-        if (!solo && player.symbol !== this.currentTurn) {
+        if (!solo && player.symbol !== currentTurn) {
             return { success: false, error: 'Not your turn' };
         }
 
-        // In solo mode, alternate symbols automatically
-        const symbolToPlay = solo ? this.currentTurn : player.symbol;
+        const symbolToPlay = solo ? currentTurn : player.symbol;
 
-        if (this.board[z][y][x] !== '') {
+        if (!this.board.isEmpty(x, y, z)) {
             return { success: false, error: 'Cell already occupied' };
         }
 
-        // Apply move
-        this.board[z][y][x] = symbolToPlay;
+        // Apply the move
+        this.board.set(x, y, z, symbolToPlay);
 
-        // Toggle turn (solo mode still alternates)
-        this.currentTurn = this.currentTurn === 'X' ? 'O' : 'X';
+        // Advance to the next turn
+        this.session.toggleTurn();
 
-        const winner = this.checkWinner();
+        // Check for winner
+        const winner = this.checker.checkWinner();
         if (winner) {
-            this.winner = winner;   
+            this.winner = winner;
             this.isFinished = true;
         }
 
@@ -81,82 +61,18 @@ export class ThreeDTicTacToeGame extends TicTacToeGame<string[][][]> {
             success: true,
             winner,
             isFinished: this.isFinished,
-            state: this.serialize(), // always return fresh serialized board
+            state: this.serialize(),
         };
     }
 
-    serialize(): GameState<any> {
+    override serialize(): GameState<any> {
         return {
             id: this.id,
             createdAt: this.createdAt,
-            board: this.board,
-            players: this.players.map(p => ({ id: p.id, symbol: p.symbol })),
+            board: this.board.toJSON(),
+            players: this.session.toJSON(),
             isFinished: this.isFinished,
             winner: this.winner,
         };
-    }
-
-    /** Precompute all 49 possible 3D winning lines once per game */
-    private generateWinningLines(): [number, number, number][][] {
-        const lines: [number, number, number][][] = [];
-
-        // Planar rows, columns, and diagonals
-        for (let z = 0; z < 3; z++) {
-            for (let i = 0; i < 3; i++) {
-                lines.push([
-                    [0, i, z], [1, i, z], [2, i, z]
-                ]); // rows
-                lines.push([
-                    [i, 0, z], [i, 1, z], [i, 2, z]
-                ]); // columns
-            }
-            lines.push([
-                [0, 0, z], [1, 1, z], [2, 2, z]
-            ]);
-            lines.push([
-                [0, 2, z], [1, 1, z], [2, 0, z]
-            ]);
-        }
-
-        // Verticals
-        for (let y = 0; y < 3; y++) {
-            for (let x = 0; x < 3; x++) {
-                lines.push([
-                    [x, y, 0], [x, y, 1], [x, y, 2]
-                ]);
-            }
-        }
-
-        // 3D diagonals
-        lines.push([
-            [0, 0, 0], [1, 1, 1], [2, 2, 2]
-        ]);
-        lines.push([
-            [0, 0, 2], [1, 1, 1], [2, 2, 0]
-        ]);
-        lines.push([
-            [0, 2, 0], [1, 1, 1], [2, 0, 2]
-        ]);
-        lines.push([
-            [0, 2, 2], [1, 1, 1], [2, 0, 0]
-        ]);
-
-        return lines;
-    }
-
-    /** Winner detection using cached winning lines */
-    protected override checkWinner(): 'X' | 'O' | '' {
-        for (const line of this.winningLines) {
-            const [[x1, y1, z1], [x2, y2, z2], [x3, y3, z3]] = line;
-            const s1 = this.board[z1][y1][x1];
-            if (!s1) continue; // empty cell, can't form a line
-            if (
-                s1 === this.board[z2][y2][x2] &&
-                s1 === this.board[z3][y3][x3]
-            ) {
-                return s1 as 'X' | 'O';
-            }
-        }
-        return '';
     }
 }
