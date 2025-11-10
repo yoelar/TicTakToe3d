@@ -1,6 +1,7 @@
 ﻿// src/components/GameBoard.tsx
 import React, { useState } from 'react';
-import '../styles/layout.css'; // updated CSS name
+import Cell from './Cell';
+import '../styles/board.css';
 
 type Symbol = 'X' | 'O' | '';
 
@@ -16,29 +17,35 @@ const GameBoard: React.FC = () => {
     const [current, setCurrent] = useState<Symbol>('X');
 
     const handleCellClick = (x: number, y: number, z: number) => {
-        if (board[z][y][x] !== '') return; // already occupied
-        const newBoard = structuredClone(board);
-        newBoard[z][y][x] = current;
-        setBoard(newBoard);
+        // ignore if occupied
+        if (board[z][y][x] !== '') return;
+
+        const copy = structuredClone(board) as Symbol[][][];
+        copy[z][y][x] = current;
+        setBoard(copy);
         setCurrent(current === 'X' ? 'O' : 'X');
     };
 
     return (
-        <div className="board-container">
+        <div className="layers-wrapper">
             {board.map((layer, z) => (
-                <div key={z} className="board-layer">
-                    {layer.map((row, y) =>
-                        row.map((cell, x) => (
-                            <div
-                                key={`${x}-${y}-${z}`}
-                                className={`cell ${cell}`} // <--- add the cell's symbol class
-                                onClick={() => handleCellClick(x, y, z)}
-                            >
-                                {cell}
-                            </div>
-                        ))
-                    )}
-                </div>
+                <section key={z} className="layer">
+                    <div className="layer-title">Layer {z + 1}</div>
+                    <div className="layer-grid" role="grid" aria-label={`Layer ${z + 1}`}>
+                        {layer.map((row, y) =>
+                            row.map((cell, x) => (
+                                <Cell
+                                    key={`${x}-${y}-${z}`}
+                                    value={cell}
+                                    onClick={() => handleCellClick(x, y, z)}
+                                    data-x={x}
+                                    data-y={y}
+                                    data-z={z}
+                                />
+                            ))
+                        )}
+                    </div>
+                </section>
             ))}
         </div>
     );

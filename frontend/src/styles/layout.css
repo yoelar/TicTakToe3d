@@ -85,3 +85,19 @@
         width: 250px;
     }
 }
+/* === Layer Labels === */
+.layer-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.layer-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #aaa;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-align: center;
+}
