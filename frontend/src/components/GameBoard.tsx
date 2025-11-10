@@ -17,7 +17,6 @@ const GameBoard: React.FC = () => {
     const [current, setCurrent] = useState<Symbol>('X');
 
     const handleCellClick = (x: number, y: number, z: number) => {
-        // ignore if occupied
         if (board[z][y][x] !== '') return;
 
         const copy = structuredClone(board) as Symbol[][][];
@@ -29,9 +28,17 @@ const GameBoard: React.FC = () => {
     return (
         <div className="layers-wrapper">
             {board.map((layer, z) => (
-                <section key={z} className="layer">
+                <section
+                    key={z}
+                    className="layer"
+                    data-testid="board-layer"   // ✅ Added for Jest/RTL tests
+                >
                     <div className="layer-title">Layer {z + 1}</div>
-                    <div className="layer-grid" role="grid" aria-label={`Layer ${z + 1}`}>
+                    <div
+                        className="layer-grid"
+                        role="grid"
+                        aria-label={`Layer ${z + 1}`}
+                    >
                         {layer.map((row, y) =>
                             row.map((cell, x) => (
                                 <Cell
