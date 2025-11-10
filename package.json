@@ -5,10 +5,13 @@
     "jest": "^30.2.0",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.5",
-    "ts-node-dev": "^2.0.0"
+    "ts-node-dev": "^2.0.0",
+    "concurrently": "^8.2.0"
   },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only backend/src/index.ts",
+    "dev:all": "npx concurrently \"npm run dev\" \"npm --prefix frontend run dev\"",
+    "test:e2e": "npx playwright test --config=frontend/playwright.config.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "jest --runInBand"
