@@ -5,13 +5,13 @@ import GameBoard from './GameBoard';
 describe('<GameBoard />', () => {
     it('renders 27 cells (3x3x3 board)', () => {
         render(<GameBoard />);
-        const cells = screen.getAllByRole('button');
+        const cells = screen.getAllByLabelText(/cell/i);
         expect(cells).toHaveLength(27);
     });
 
     it('places X on first click and O on next click', () => {
         render(<GameBoard />);
-        const cells = screen.getAllByRole('button');
+        const cells = screen.getAllByLabelText(/cell/i);
 
         // Click first cell -> X
         fireEvent.click(cells[0]);
@@ -24,7 +24,7 @@ describe('<GameBoard />', () => {
 
     it('does not overwrite a filled cell', () => {
         render(<GameBoard />);
-        const cells = screen.getAllByRole('button');
+        const cells = screen.getAllByLabelText(/cell/i);
 
         fireEvent.click(cells[0]); // X
         fireEvent.click(cells[0]); // should not change
@@ -33,7 +33,7 @@ describe('<GameBoard />', () => {
 
     it('alternates correctly even when skipping filled cells', () => {
         render(<GameBoard />);
-        const cells = screen.getAllByRole('button');
+        const cells = screen.getAllByLabelText(/cell/i);
 
         fireEvent.click(cells[0]); // X
         fireEvent.click(cells[0]); // ignored
@@ -43,7 +43,7 @@ describe('<GameBoard />', () => {
     });
     it('plays a short game sequence correctly', () => {
         render(<GameBoard />);
-        const cells = screen.getAllByRole('button');
+        const cells = screen.getAllByLabelText(/cell/i);
 
         // Simulate moves: X, O, X, O, X
         fireEvent.click(cells[0]); // X
@@ -62,7 +62,7 @@ describe('<GameBoard />', () => {
 
     it('maintains board state across re-renders', () => {
         const { rerender } = render(<GameBoard />);
-        const cells = screen.getAllByRole('button');
+        const cells = screen.getAllByLabelText(/cell/i);
 
         fireEvent.click(cells[0]); // X
         rerender(<GameBoard />); // simulate re-render (React state should persist)
@@ -71,7 +71,7 @@ describe('<GameBoard />', () => {
 
     it('ignores clicks on filled cells but continues the game', () => {
         render(<GameBoard />);
-        const cells = screen.getAllByRole('button');
+        const cells = screen.getAllByLabelText(/cell/i);
 
         fireEvent.click(cells[0]); // X
         fireEvent.click(cells[0]); // ignored
