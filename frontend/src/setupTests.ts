@@ -1,10 +1,25 @@
 // src/setupTests.ts
-import { server } from './mocks/server';
+// ✅ Import polyfills FIRST, before anything else
+import 'whatwg-fetch';  // adds global fetch, Response, Request, Headers
 import '@testing-library/jest-dom';
 
-// Some jsdom environments don't have global Response/Request
-import 'whatwg-fetch';  // ✅ adds global fetch, Response, Request, Headers
+// Polyfill TextEncoder/TextDecoder for jsdom
+import { TextEncoder, TextDecoder } from 'util';
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder as any;
 
+// Polyfill MessageChannel for jsdom
+import { MessageChannel } from 'worker_threads';
+global.MessageChannel = MessageChannel as any;
+
+// Polyfill BroadcastChannel (must come AFTER MessageChannel)
+import 'broadcastchannel-polyfill';
+
+// Polyfill Web Streams API (ReadableStream, WritableStream, TransformStream, etc.)
+import { ReadableStream, WritableStream, TransformStream } from 'stream/web';
+global.ReadableStream = ReadableStream as any;
+global.WritableStream = WritableStream as any;
+global.TransformStream = TransformStream as any;
 
 // Polyfill structuredClone for Jest (jsdom)
 if (typeof global.structuredClone === 'undefined') {
@@ -13,11 +28,18 @@ if (typeof global.structuredClone === 'undefined') {
     };
 }
 
-// Establish API mocking before all tests.
-beforeAll(() => server.listen());
+// ✅ NOW import server after polyfills are loaded
+import { server } from './mocks/server';
 
-// Reset any request handlers that are declared as part of our tests (so they don’t affect others)
+// Establish API mocking before all tests.
+beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
+
+// Reset any request handlers that are declared as part of our tests (so they don't affect others)
 afterEach(() => server.resetHandlers());
 
 // Clean up after the tests are finished.
-afterAll(() => server.close());
+afterAll(() => {
+    server.close();
+    // Give MSW time to clean up
+    return new Promise(resolve => setTimeout(resolve, 100));
+});

@@ -1,16 +1,16 @@
 ﻿// src/mocks/handlers.ts
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 
 export const handlers = [
-    rest.post('/api/restart', (req, res, ctx) => {
-        return res(ctx.status(200), ctx.json({ message: 'Board reset' }));
+    http.post('/api/restart', () => {
+        return HttpResponse.json({ message: 'Board reset' });
     }),
 
-    rest.post('/api/move', async (req, res, ctx) => {
-        const { x, y, z, player } = await req.json();
-        return res(
-            ctx.status(200),
-            ctx.json({ success: true, nextPlayer: player === 'X' ? 'O' : 'X' })
-        );
+    http.post('/api/move', async ({ request }) => {
+        const body = await request.json();
+        // Handle your move logic here
+        return HttpResponse.json({ success: true, board: [] });
     }),
+
+    // Add other handlers as needed
 ];
