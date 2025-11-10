@@ -5,6 +5,7 @@ import { MoveResult } from './types';
 import { IBoard } from './board/IBoard';
 import { TwoPlayerSession } from './session/TwoPlayerSession';
 
+export type TicTacToeMove = { x: number; y: number; z?: number };
 
 export abstract class TicTacToeGame<TBoard extends IBoard<'X' | 'O' | ''>> extends Game<TicTacToePlayer> {
     protected board: TBoard;
@@ -28,7 +29,7 @@ export abstract class TicTacToeGame<TBoard extends IBoard<'X' | 'O' | ''>> exten
             : { success: false, error: 'Player not found' };
     }
 
-    protected isSoloMode(): boolean {
+    public isSoloMode(): boolean {
         return this.session.isSolo();
     }
 
@@ -44,7 +45,7 @@ export abstract class TicTacToeGame<TBoard extends IBoard<'X' | 'O' | ''>> exten
         return this.session.getPlayers();
     }
 
-    abstract makeMove(player: TicTacToePlayer, moveData: { x: number; y: number; z?: number }): MoveResult;
+    abstract makeMove(player: TicTacToePlayer, moveData: TicTacToeMove): MoveResult;
 
     override serialize() {
         return {
