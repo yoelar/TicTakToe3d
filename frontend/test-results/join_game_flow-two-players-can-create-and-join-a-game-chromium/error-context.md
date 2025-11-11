@@ -1,0 +1,57 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - heading "3D Tic Tac Toe" [level=1] [ref=e6]
+    - generic [ref=e7]:
+      - button "Create Game" [active] [ref=e8] [cursor=pointer]
+      - text: local-5386
+    - generic [ref=e9]:
+      - button "Restart" [ref=e10]
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - generic [ref=e13]: Layer 1
+          - grid "Layer 1" [ref=e14]:
+            - button "cell-empty" [ref=e15] [cursor=pointer]
+            - button "cell-empty" [ref=e16] [cursor=pointer]
+            - button "cell-empty" [ref=e17] [cursor=pointer]
+            - button "cell-empty" [ref=e18] [cursor=pointer]
+            - button "cell-empty" [ref=e19] [cursor=pointer]
+            - button "cell-empty" [ref=e20] [cursor=pointer]
+            - button "cell-empty" [ref=e21] [cursor=pointer]
+            - button "cell-empty" [ref=e22] [cursor=pointer]
+            - button "cell-empty" [ref=e23] [cursor=pointer]
+        - generic [ref=e24]:
+          - generic [ref=e25]: Layer 2
+          - grid "Layer 2" [ref=e26]:
+            - button "cell-empty" [ref=e27] [cursor=pointer]
+            - button "cell-empty" [ref=e28] [cursor=pointer]
+            - button "cell-empty" [ref=e29] [cursor=pointer]
+            - button "cell-empty" [ref=e30] [cursor=pointer]
+            - button "cell-empty" [ref=e31] [cursor=pointer]
+            - button "cell-empty" [ref=e32] [cursor=pointer]
+            - button "cell-empty" [ref=e33] [cursor=pointer]
+            - button "cell-empty" [ref=e34] [cursor=pointer]
+            - button "cell-empty" [ref=e35] [cursor=pointer]
+        - generic [ref=e36]:
+          - generic [ref=e37]: Layer 3
+          - grid "Layer 3" [ref=e38]:
+            - button "cell-empty" [ref=e39] [cursor=pointer]
+            - button "cell-empty" [ref=e40] [cursor=pointer]
+            - button "cell-empty" [ref=e41] [cursor=pointer]
+            - button "cell-empty" [ref=e42] [cursor=pointer]
+            - button "cell-empty" [ref=e43] [cursor=pointer]
+            - button "cell-empty" [ref=e44] [cursor=pointer]
+            - button "cell-empty" [ref=e45] [cursor=pointer]
+            - button "cell-empty" [ref=e46] [cursor=pointer]
+            - button "cell-empty" [ref=e47] [cursor=pointer]
+  - complementary [ref=e48]:
+    - generic [ref=e50]: "Next: X"
+    - generic [ref=e51]:
+      - heading "Players" [level=4] [ref=e52]
+      - list
+    - generic [ref=e53]:
+      - button "Restart" [ref=e54] [cursor=pointer]
+      - button "Leave" [ref=e55] [cursor=pointer]
+```

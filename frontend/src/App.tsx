@@ -118,7 +118,7 @@ export default function App() {
                 <div>
                     <h1 style={{ margin: 0 }}>3D Tic Tac Toe</h1>
                     <div style={{ margin: '8px 0' }}>
-                        <button onClick={onCreate} className="btn" aria-label="Create Game">Create Game</button>
+                        <button onClick={onCreate} className="btn" data-testid="create-game-btn" aria-label="Create Game">Create Game</button>
                         {game && <span data-testid="game-id" style={{ marginLeft: 8 }}>{game.id}</span>}
                     </div>
                     <GameBoard state={game} onCellClick={onCellClick} />
