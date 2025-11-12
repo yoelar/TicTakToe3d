@@ -13,8 +13,8 @@ const BoardLayer: React.FC<Props> = ({ layer, z, onCellClick }) => (
     <section className="layer" data-testid="board-layer">
         <div className="layer-title">Layer {z + 1}</div>
         <div className="layer-grid" role="grid" aria-label={`Layer ${z + 1}`}>
-            {layer.map((row, y) =>
-                row.map((cell, x) => (
+            {layer?.map((row, y) =>
+                row?.map((cell, x) => (
                     <Cell
                         key={`${x}-${y}-${z}`}
                         value={cell}

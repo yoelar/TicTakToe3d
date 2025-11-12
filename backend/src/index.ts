@@ -27,7 +27,7 @@ app.post('/api/game', (req: Request, res: Response) => {
         return res.status(400).json({ error: result.error || 'Failed to create game' });
     }
 
-    log.info({ gameId: result.gameId, clientId }, 'Game created');
+    log.info({ gameId: result.gameId, clientId }, `Game created: ${JSON.stringify(result)}`);
     res.status(200).json(result);
 });
 

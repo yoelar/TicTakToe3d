@@ -15,6 +15,7 @@ export const useGameState = () => {
     const [current, setCurrent] = useState<Symbol>('X');
 
     const makeMove = (x: number, y: number, z: number) => {
+        console.log(`Move made at (${x}, ${y}, ${z}) by ${current}`);
         if (board[z][y][x] !== '') return; // ignore filled cells
         const newBoard = structuredClone(board);
         newBoard[z][y][x] = current;

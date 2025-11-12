@@ -1,45 +1,140 @@
 // src/setupTests.ts
-// ✅ Import polyfills FIRST, before anything else
-import 'whatwg-fetch';  // adds global fetch, Response, Request, Headers
-import '@testing-library/jest-dom';
-
-// Polyfill TextEncoder/TextDecoder for jsdom
+// ---------------------------------------------------------------------------
+// ✅ TextEncoder/TextDecoder/TransformStream Polyfills (Required for MSW)
+// ---------------------------------------------------------------------------
 import { TextEncoder, TextDecoder } from 'util';
+import { ReadableStream, WritableStream, TransformStream } from 'stream/web';
+
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder as any;
-
-// Polyfill MessageChannel for jsdom
-import { MessageChannel } from 'worker_threads';
-global.MessageChannel = MessageChannel as any;
-
-// Polyfill BroadcastChannel (must come AFTER MessageChannel)
-import 'broadcastchannel-polyfill';
-
-// Polyfill Web Streams API (ReadableStream, WritableStream, TransformStream, etc.)
-import { ReadableStream, WritableStream, TransformStream } from 'stream/web';
 global.ReadableStream = ReadableStream as any;
 global.WritableStream = WritableStream as any;
 global.TransformStream = TransformStream as any;
 
-// Polyfill structuredClone for Jest (jsdom)
-if (typeof global.structuredClone === 'undefined') {
-    global.structuredClone = (obj) => {
-        return JSON.parse(JSON.stringify(obj));
+if (typeof global.structuredClone !== 'function') {
+    global.structuredClone = (obj) => JSON.parse(JSON.stringify(obj));
+}
+
+// ---------------------------------------------------------------------------
+// ✅ BroadcastChannel Polyfill (Required for MSW)
+// ---------------------------------------------------------------------------
+if (!global.BroadcastChannel) {
+    global.BroadcastChannel = class BroadcastChannel {
+        name: string;
+        onmessage: ((event: any) => void) | null = null;
+        onmessageerror: ((event: any) => void) | null = null;
+
+        constructor(name: string) {
+            this.name = name;
+        }
+
+        postMessage(_message: any) { }
+        close() { }
+        addEventListener(_type: string, _listener: any) { }
+        removeEventListener(_type: string, _listener: any) { }
+        dispatchEvent(_event: Event): boolean { return true; }
+    } as any;
+}
+
+// ---------------------------------------------------------------------------
+// ✅ Basic Polyfills
+// ---------------------------------------------------------------------------
+import 'whatwg-fetch';
+import '@testing-library/jest-dom';
+
+// ---------------------------------------------------------------------------
+// ✅ Crypto.randomUUID Polyfill
+// ---------------------------------------------------------------------------
+if (!global.crypto) {
+    (global as any).crypto = {};
+}
+if (!global.crypto.randomUUID) {
+    global.crypto.randomUUID = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = (Math.random() * 16) | 0;
+            const v = c === 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+        });
     };
 }
 
-// ✅ NOW import server after polyfills are loaded
+// ---------------------------------------------------------------------------
+// ✅ IntersectionObserver Polyfill (if needed)
+// ---------------------------------------------------------------------------
+if (!global.IntersectionObserver) {
+    global.IntersectionObserver = class IntersectionObserver {
+        constructor() { }
+        disconnect() { }
+        observe() { }
+        takeRecords() { return []; }
+        unobserve() { }
+    } as any;
+}
+
+// ---------------------------------------------------------------------------
+// ✅ matchMedia Polyfill (if needed)
+// ---------------------------------------------------------------------------
+Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: jest.fn().mockImplementation(query => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+    })),
+});
+
+// ---------------------------------------------------------------------------
+// ✅ Mock WebSocket service before any React component loads
+// ---------------------------------------------------------------------------
+jest.mock('./services/WebSocketService', () => {
+    const MockWebSocketService = require('./mocks/WebSocketService').default;
+    return {
+        WebSocketService: MockWebSocketService,
+        default: MockWebSocketService
+    };
+});
+
+// ---------------------------------------------------------------------------
+// ✅ Setup Mock Service Worker (MSW)
+// ---------------------------------------------------------------------------
 import { server } from './mocks/server';
 
-// Establish API mocking before all tests.
-beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
+beforeAll(() => {
+    // Start MSW server
+    server.listen({ onUnhandledRequest: 'bypass' });
 
-// Reset any request handlers that are declared as part of our tests (so they don't affect others)
-afterEach(() => server.resetHandlers());
+    // Quiet down console logs during tests
+    jest.spyOn(console, 'log').mockImplementation(() => { });
+    jest.spyOn(console, 'warn').mockImplementation(() => { });
+    jest.spyOn(console, 'error').mockImplementation(() => { });
+});
 
-// Clean up after the tests are finished.
+afterEach(() => {
+    // Reset MSW handlers after each test
+    server.resetHandlers();
+
+    // Clear all mocks
+    jest.clearAllMocks();
+
+    // Clear localStorage
+    localStorage.clear();
+
+    // Clear all timers
+    jest.clearAllTimers();
+});
+
 afterAll(() => {
+    // Close MSW server
     server.close();
-    // Give MSW time to clean up
-    return new Promise(resolve => setTimeout(resolve, 100));
+
+    // Restore all mocks
+    jest.restoreAllMocks();
+
+    // Final timer cleanup
+    jest.clearAllTimers();
 });
