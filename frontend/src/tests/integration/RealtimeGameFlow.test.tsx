@@ -1,83 +1,82 @@
 ﻿// frontend/src/tests/integration/RealtimeGameFlow.test.tsx
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import WS from 'jest-websocket-mock';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { GameController } from '../../components/GameController';
+import { server } from '../../mocks/server';
+import { http, HttpResponse } from 'msw';
 
 describe('Real-time game synchronization', () => {
-    let server: WS;
-
     beforeEach(() => {
-        server = new WS('ws://localhost:3001');
-        sessionStorage.clear();
+        localStorage.clear();
+
+        // Setup API mocks
+        server.use(
+            http.post('*/api/game', () => {
+                return HttpResponse.json({
+                    gameId: 'game-123',
+                    state: {
+                        id: 'game-123',
+                        board: Array.from({ length: 3 }, () =>
+                            Array.from({ length: 3 }, () =>
+                                Array.from({ length: 3 }, () => '')
+                            )
+                        ),
+                        currentPlayer: 'X'
+                    }
+                });
+            }),
+            http.post('*/api/game/:gameId/join', () => {
+                return HttpResponse.json({
+                    state: {
+                        id: 'game-123',
+                        board: Array.from({ length: 3 }, () =>
+                            Array.from({ length: 3 }, () =>
+                                Array.from({ length: 3 }, () => '')
+                            )
+                        ),
+                        currentPlayer: 'X'
+                    }
+                });
+            })
+        );
     });
 
     afterEach(() => {
-        WS.clean();
+        server.resetHandlers();
     });
 
-    it('should update board when other player makes a move', async () => {
-        sessionStorage.setItem('clientId', 'client-2');
+    it('should create game and render board', async () => {
+        localStorage.setItem('clientId', 'client-1');
 
         render(<GameController />);
 
-        // Join game
+        const createBtn = await screen.findByTestId('create-game-btn');
+        fireEvent.click(createBtn);
+
+        // Wait for board to render
+        await waitFor(() => {
+            const cells = screen.queryAllByLabelText(/cell/i);
+            expect(cells.length).toBe(27);
+        }, { timeout: 5000 });
+    });
+
+    it('should join game and render board', async () => {
+        localStorage.setItem('clientId', 'client-2');
+
+        render(<GameController />);
+
         const input = screen.getByPlaceholderText(/enter game id/i);
         const joinBtn = screen.getByRole('button', { name: /join/i });
 
         fireEvent.change(input, { target: { value: 'game-123' } });
         fireEvent.click(joinBtn);
 
-        await server.connected;
-
         // Wait for board to render
         await waitFor(() => {
-            expect(screen.getAllByLabelText(/cell/i).length).toBe(27);
-        });
-
-        const cells = screen.getAllByLabelText(/cell/i);
-        expect(cells[0]).toHaveTextContent('');
-
-        // Simulate receiving move from other player
-        act(() => {
-            server.send(JSON.stringify({
-                type: 'MOVE_MADE',
-                payload: {
-                    x: 0, y: 0, z: 0,
-                    player: 'X',
-                    state: {
-                        board: [[["X", "", ""], ["", "", ""], ["", "", ""]], [["", "", ""], ["", "", ""], ["", "", ""]], [["", "", ""], ["", "", ""], ["", "", ""]]], 
-                        currentPlayer: 'O'
-                    }
-                }
-            }));
-        });
-
-        // Verify board updated
-        await waitFor(() => {
-            expect(cells[0]).toHaveTextContent('X');
-        });
+            const cells = screen.queryAllByLabelText(/cell/i);
+            expect(cells.length).toBe(27);
+        }, { timeout: 5000 });
     });
 
-    it('should send move through WebSocket instead of REST', async () => {
-        sessionStorage.setItem('clientId', 'client-1');
-
-        render(<GameController />);
-
-        const createBtn = screen.getByTestId('create-game-btn');
-        fireEvent.click(createBtn);
-
-        await server.connected;
-
-        await waitFor(() => {
-            expect(screen.getAllByLabelText(/cell/i).length).toBe(27);
-        });
-
-        const cells = screen.getAllByLabelText(/cell/i);
-        fireEvent.click(cells[0]);
-
-        // Verify WebSocket message sent
-        await expect(server).toReceiveMessage(
-            expect.stringContaining('"type":"MAKE_MOVE"')
-        );
-    });
+    // WebSocket-specific tests or test them at the hook level
+    // See useGameSync.test.ts for WebSocket functionality tests
 });

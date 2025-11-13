@@ -1,5 +1,4 @@
-﻿// src/__mocks__/WebSocketService.ts
-
+﻿// src/mocks/WebSocketService.ts
 class MockWebSocketService {
     private callbacks: ((connected: boolean) => void)[] = [];
     private messageCallbacks: ((msg: any) => void)[] = [];
@@ -9,7 +8,7 @@ class MockWebSocketService {
         setTimeout(() => this.notifyConnectionChange(true), 0);
     }
 
-    connect(_gameId?: string, _clientId?: string) {
+    connect(_clientId?: string, _gameId?: string) {  // ✅ Fixed parameter order
         this.notifyConnectionChange(true);
     }
 
@@ -17,8 +16,7 @@ class MockWebSocketService {
         this.notifyConnectionChange(false);
     }
 
-    sendMessage(_msg: any) {
-        // Just log instead of sending (suppressed in tests via console mock)
+    send(_msg: any) {  // ✅ Changed from sendMessage to send
         console.log("Mock WS send:", _msg);
     }
 

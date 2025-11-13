@@ -22,7 +22,11 @@ export default {
         'node_modules/(?!(msw|until-async)/)',
     ],
 
-    testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+    testPathIgnorePatterns: [
+        '/node_modules/',
+        '/dist/',
+        '/tests/e2e/',  // ✅ Ignore Playwright tests
+    ],
 
     // 👇 Prevent React’s internal scheduler “MESSAGEPORT” warning from polluting output
     reporters: [
