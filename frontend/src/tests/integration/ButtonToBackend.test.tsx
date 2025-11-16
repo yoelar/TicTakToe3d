@@ -1,4 +1,4 @@
-﻿// frontend/src/tests/integration/ButtonToBackend.test.tsx
+﻿// src/tests/integration/ButtonToBackend.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { GameController } from '../../components/GameController';
 import { server } from '../../mocks/server';
@@ -6,17 +6,14 @@ import { http, HttpResponse } from 'msw';
 
 describe('Button Click to Backend Integration', () => {
     let apiCallsMade: string[] = [];
-    let wsMessagesSent: any[] = [];
 
     beforeEach(() => {
         apiCallsMade = [];
-        wsMessagesSent = [];
         localStorage.clear();
         localStorage.setItem('clientId', 'test-client-1');
 
-        // Track API calls
         server.use(
-            http.post('*/api/game', ({ request }) => {
+            http.post('*/api/game', () => {
                 apiCallsMade.push('POST /api/game');
                 return HttpResponse.json({
                     gameId: 'game-123',
@@ -33,8 +30,7 @@ describe('Button Click to Backend Integration', () => {
                 });
             }),
 
-            http.post('*/api/game/:gameId/move', async ({ request, params }) => {
-                const body = await request.json() as any;
+            http.post('*/api/game/:gameId/move', async ({ params }) => {
                 apiCallsMade.push(`POST /api/game/${params.gameId}/move`);
 
                 return HttpResponse.json({
@@ -54,6 +50,10 @@ describe('Button Click to Backend Integration', () => {
                 });
             })
         );
+    });
+
+    afterEach(() => {
+        server.resetHandlers();
     });
 
     it('should call backend API when create game button is clicked', async () => {
@@ -83,49 +83,7 @@ describe('Button Click to Backend Integration', () => {
         }, { timeout: 3000 });
     });
 
-    it('should send WebSocket message when cell is clicked', async () => {
-        // Mock WebSocket to track messages
-        const mockWsSend = jest.fn();
-        jest.spyOn(require('../../services/WebSocketService'), 'WebSocketService')
-            .mockImplementation(() => ({
-                connect: jest.fn(),
-                disconnect: jest.fn(),
-                send: mockWsSend,
-                onMessage: jest.fn(),
-                onConnectionChange: jest.fn(),
-            }));
-
-        render(<GameController />);
-
-        // Create game
-        const createBtn = await screen.findByTestId('create-game-btn');
-        fireEvent.click(createBtn);
-
-        // Wait for board
-        await waitFor(() => {
-            const cells = screen.queryAllByLabelText(/cell/i);
-            expect(cells.length).toBe(27);
-        }, { timeout: 3000 });
-
-        // Click a cell
-        const cells = screen.getAllByLabelText(/cell/i);
-        fireEvent.click(cells[0]);
-
-        // Verify WebSocket message was sent
-        await waitFor(() => {
-            expect(mockWsSend).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    type: 'MAKE_MOVE',
-                    payload: expect.objectContaining({
-                        player: 'X',
-                        x: 0,
-                        y: 0,
-                        z: 0
-                    })
-                })
-            );
-        });
-    });
+    // ✅ DELETED the WebSocket spy test - it's tested at the hook level already
 
     it('should display error when API call fails', async () => {
         server.use(
