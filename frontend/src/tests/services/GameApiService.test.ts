@@ -194,4 +194,73 @@ describe('GameApiService', () => {
                 .rejects.toThrow('Move rejected by server');
         });
     });
+    describe('getGameState', () => {
+        it('should fetch game state successfully', async () => {
+            server.use(
+                http.get('*/api/game/:gameId/state', ({ params }) => {
+                    return HttpResponse.json({
+                        id: params.gameId,
+                        board: Array.from({ length: 3 }, () =>
+                            Array.from({ length: 3 }, () =>
+                                Array.from({ length: 3 }, () => '')
+                            )
+                        ),
+                        currentPlayer: 'O',
+                        players: [
+                            { id: 'client-1', symbol: 'X' },
+                            { id: 'client-2', symbol: 'O' }
+                        ],
+                        isFinished: false,
+                        winner: null
+                    });
+                })
+            );
+
+            const result = await service.getGameState('game-123');
+
+            expect(result.id).toBe('game-123');
+            expect(result.currentPlayer).toBe('O');
+            expect(result.board).toBeDefined();
+        });
+
+        it('should throw error when game not found', async () => {
+            server.use(
+                http.get('*/api/game/:gameId/state', () => {
+                    return new HttpResponse(null, { status: 404 });
+                })
+            );
+
+            await expect(service.getGameState('invalid-game'))
+                .rejects.toThrow('Failed to get game state');
+        });
+
+        it('should throw error on server error', async () => {
+            server.use(
+                http.get('*/api/game/:gameId/state', () => {
+                    return new HttpResponse(null, { status: 500 });
+                })
+            );
+
+            await expect(service.getGameState('game-123'))
+                .rejects.toThrow('Failed to get game state');
+        });
+
+        it('should include correct game ID in request URL', async () => {
+            let capturedGameId = '';
+
+            server.use(
+                http.get('*/api/game/:gameId/state', ({ params }) => {
+                    capturedGameId = params.gameId as string;
+                    return HttpResponse.json({
+                        id: params.gameId,
+                        board: [],
+                        currentPlayer: 'X'
+                    });
+                })
+            );
+
+            await service.getGameState('test-game-456');
+            expect(capturedGameId).toBe('test-game-456');
+        });
+    });
 });

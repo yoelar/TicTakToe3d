@@ -6,6 +6,7 @@ export interface IGameApiService {
     joinGame(gameId: string, clientId: string): Promise<{ state: GameState }>;
     leaveGame(gameId: string, clientId: string): Promise<void>;
     makeMove(gameId: string, clientId: string, player: 'X' | 'O', x: number, y: number, z: number): Promise<{ state: GameState }>;
+    getGameState(gameId: string): Promise<GameState>;
 }
 
 /**
@@ -63,4 +64,13 @@ export class GameApiService implements IGameApiService {
         }
         return resp.json();
     }
+
+    async getGameState(gameId: string): Promise<GameState> {
+        const res = await fetch(`${this.baseUrl}/game/${gameId}/state`);
+        if (!res.ok) {
+            throw new Error('Failed to get game state');
+        }
+        return res.json();
+    }
+
 }
