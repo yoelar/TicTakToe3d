@@ -10,10 +10,14 @@ global.TextDecoder = TextDecoder as any;
 global.ReadableStream = ReadableStream as any;
 global.WritableStream = WritableStream as any;
 global.TransformStream = TransformStream as any;
+// Source - https://stackoverflow.com/a/79504374
+// Posted by Francesco Borzi
+// Retrieved 2025-11-17, License - CC BY-SA 4.0
 
-if (typeof global.structuredClone !== 'function') {
-    global.structuredClone = (obj) => JSON.parse(JSON.stringify(obj));
-}
+global.structuredClone = jest.fn((val): unknown =>
+    JSON.parse(JSON.stringify(val)),
+);
+
 
 // ---------------------------------------------------------------------------
 // ✅ BroadcastChannel Polyfill (Required for MSW)
@@ -88,16 +92,8 @@ Object.defineProperty(window, 'matchMedia', {
     })),
 });
 
-// ---------------------------------------------------------------------------
-// ✅ Mock WebSocket service before any React component loads
-// ---------------------------------------------------------------------------
-jest.mock('./services/WebSocketService', () => {
-    const MockWebSocketService = require('./mocks/WebSocketService').default;
-    return {
-        WebSocketService: MockWebSocketService,
-        default: MockWebSocketService
-    };
-});
+// ❌ REMOVED: WebSocket mock (no longer needed)
+// jest.mock('./services/WebSocketService', ...);
 
 // ---------------------------------------------------------------------------
 // ✅ Setup Mock Service Worker (MSW)

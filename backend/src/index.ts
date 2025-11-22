@@ -108,6 +108,7 @@ app.post('/api/game/:id/move', (req: Request, res: Response) => {
 
     const state = game.serialize();
     log.info({ gameId: id, nextTurn: (game as any).currentTurn }, 'Move accepted');
+    if (moveResult.state.isFinished) { log.info({ gameId: id, winner: moveResult.state.winner }, `Game finished. Winner is ${moveResult.state.winner}`); }
     return res.status(200).json({ state });
 });
 

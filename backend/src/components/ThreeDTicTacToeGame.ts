@@ -30,6 +30,10 @@ export class ThreeDTicTacToeGame extends TicTacToeGame<Board3D> {
             return { success: false, error: 'Invalid coordinates' };
         }
 
+        if (this.isFinished) {
+            return { success: false, error: 'Game is already finished' };
+        }
+
         // Delegate solo and turn logic to session
         const solo = this.isSoloMode();
         const currentTurn = this.currentTurn;

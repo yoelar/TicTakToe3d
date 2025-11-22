@@ -17,7 +17,7 @@ export const useGameState = () => {
     const makeMove = (x: number, y: number, z: number) => {
         console.log(`Move made at (${x}, ${y}, ${z}) by ${current}`);
         if (board[z][y][x] !== '') return; // ignore filled cells
-        const newBoard = structuredClone(board);
+        const newBoard = JSON.parse(JSON.stringify(board));// structuredClone(board);
         newBoard[z][y][x] = current;
         setBoard(newBoard);
         setCurrent(current === 'X' ? 'O' : 'X');
