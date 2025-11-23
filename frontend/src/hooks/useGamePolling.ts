@@ -12,6 +12,7 @@ import { IGameApiService } from '../services/GameApiService';
  * @param onStateUpdate - Callback when new state is received
  * @param intervalMs - Polling interval in milliseconds (default: 2000)
  */
+
 export const useGamePolling = (
     apiService: IGameApiService,
     gameId: string | null,
@@ -22,48 +23,63 @@ export const useGamePolling = (
     const isMountedRef = useRef(true);
 
     // Memoize fetch function to avoid recreating on every render
-    const fetchState = useCallback(async () => {
+    const fetchState = useCallback(async (gameId: string | null) => {
+        console.log(`[Polling] fetchState called. gameId is ${gameId}.
+        isMountedRef.current is ${isMountedRef.current}`);
         if (!gameId || !isMountedRef.current) {
+            console.log('[Polling] Skipped: no gameId or unmounted');
             return;
         }
+
+        console.log(`[Polling] Fetching state for game ${gameId}...`);
 
         try {
             const state = await apiService.getGameState(gameId);
 
+            console.log('[Polling] Received state:', {
+                currentPlayer: state.currentPlayer,
+                isFinished: state.isFinished,
+                winner: state.winner,
+                firstCell: state.board?.[0]?.[0]?.[0],
+                boardExists: !!state.board
+            });
+
             // Only update if still mounted
             if (isMountedRef.current) {
+                console.log('[Polling] Calling onStateUpdate with new state');
                 onStateUpdate(state);
+            } else {
+                console.log('[Polling] Component unmounted, skipping update');
             }
         } catch (err) {
-            console.error('Failed to fetch game state:', err);
+            console.error('[Polling] Failed to fetch game state:', err);
         }
     }, [gameId, apiService, onStateUpdate]);
 
     useEffect(() => {
-        // Don't poll if no game
         if (!gameId) {
+            console.log('[Polling] No gameId, not starting polling');
             return;
         }
 
-        // Fetch immediately on mount/gameId change
-        fetchState();
+        console.log(`[Polling] Starting polling for game ${gameId} every ${intervalMs}ms`);
+
+        // Fetch immediately
+        fetchState(gameId);
 
         // Set up polling interval
-        intervalRef.current = setInterval(fetchState, intervalMs);
+        intervalRef.current = setInterval(() => {
+            console.log('[Polling] Interval triggered');
+            fetchState(gameId);
+        }, intervalMs);
 
         // Cleanup function
         return () => {
+            console.log('[Polling] Cleaning up polling interval');
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
             }
         };
     }, [gameId, fetchState, intervalMs]);
-
-    // Track mount status for cleanup
-    useEffect(() => {
-        return () => {
-            isMountedRef.current = false;
-        };
-    }, []);
 };

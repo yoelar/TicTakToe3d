@@ -70,7 +70,22 @@ export const useGameConnection = (
     }, [gameId, clientId, apiService]);
 
     const updateGameState = useCallback((newState: GameState) => {
-        setGameState(newState);
+        console.log('[GameConnection] updateGameState called with:', {
+            currentPlayer: newState.currentPlayer,
+            isFinished: newState.isFinished,
+            winner: newState.winner,
+            firstCell: newState.board?.[0]?.[0]?.[0],
+            stateId: newState.id
+        });
+
+        setGameState(prevState => {
+            console.log('[GameConnection] Previous state:', {
+                currentPlayer: prevState?.currentPlayer,
+                firstCell: prevState?.board?.[0]?.[0]?.[0]
+            });
+            console.log('[GameConnection] Setting new state');
+            return newState;
+        });
     }, []);
 
     return {

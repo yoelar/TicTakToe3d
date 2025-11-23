@@ -3,6 +3,11 @@ export default {
     preset: 'ts-jest',
     testEnvironment: 'jsdom',
     testTimeout: 10000,
+    testEnvironmentOptions: {
+        resources: 'usable', // This allows loading of cross-origin resources
+        url: 'http://localhost:4000', // Set the base URL to match your backend's origin
+    },
+
 
     transform: {
         '^.+\\.(t|j)sx?$': ['ts-jest', { useESM: true }],
