@@ -1,10 +1,17 @@
 ﻿import { ThreeDTicTacToeGame } from './ThreeDTicTacToeGame';
 import { TicTacToePlayer } from './TicTacToePlayer';
+import { toDTO } from '../utils/convert';
+import {
+    CreateGameResponse,
+    JoinGameResponse,
+    MoveResponse,
+    LeaveGameResponse
+} from 'tictactoe3d-shared';
 
 export const games: Record<string, ThreeDTicTacToeGame> = {};
 
 /** Create a new 3D Tic Tac Toe game with the first player */
-export function createGame(clientId: string) {
+export function createGame(clientId: string): CreateGameResponse {
     const gameId = `game-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const game = new ThreeDTicTacToeGame(gameId);
     games[gameId] = game;
@@ -18,12 +25,12 @@ export function createGame(clientId: string) {
         success: true,
         gameId,
         player: joinRes.player.symbol,
-        state: game.serialize(),
+        state: toDTO(game.serialize()),
     };
 }
 
 /** Player joins an existing game */
-export function joinGame(gameId: string, clientId: string) {
+export function joinGame(gameId: string, clientId: string): JoinGameResponse {
     const game = games[gameId];
     if (!game) {
         return { success: false, error: 'Game not found' };
@@ -37,7 +44,7 @@ export function joinGame(gameId: string, clientId: string) {
     return {
         success: true,
         player: result.player.symbol,
-        state: game.serialize(),
+        state: toDTO(game.serialize()),
     };
 }
 
@@ -46,7 +53,7 @@ export function makeMove(
     gameId: string,
     clientId: string,
     moveData: { x: number; y: number; z?: number }
-) {
+): MoveResponse {
     const game = games[gameId];
     if (!game) {
         return { success: false, error: 'Game not found' };
@@ -70,12 +77,12 @@ export function makeMove(
         success: true,
         winner: result.winner ?? currentState.winner ?? '',
         isFinished: result.isFinished ?? currentState.isFinished ?? false,
-        state: currentState,
+        state: toDTO(currentState),
     };
 }
 
 /** Player leaves an existing game */
-export function leaveGame(gameId: string, clientId: string) {
+export function leaveGame(gameId: string, clientId: string): LeaveGameResponse {
     const game = games[gameId];
     if (!game) {
         return { success: false, error: 'Game not found' };
@@ -88,10 +95,13 @@ export function leaveGame(gameId: string, clientId: string) {
 
     const result = game.removePlayer(player.id);
 
+    if (!result.success) {
+        return { success: false, error: result.error || 'Failed to remove player' };
+    }
+
     return {
-        success: result.success,
-        error: result.error,
+        success: true,
         remaining: game.getPlayers().map(p => ({ id: p.id, symbol: p.symbol })),
-        state: game.serialize(),
+        state: toDTO(game.serialize()),
     };
 }

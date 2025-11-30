@@ -58,3 +58,49 @@ export type MoveResult =
         success: false;
         error: string;
     };
+
+export interface GameStateDTO {
+    board: string[][][];
+    currentPlayer: string;
+    winner: string;
+    isFinished: boolean;
+}
+
+export interface CreateGameSuccess {
+    success: true;
+    gameId: string;
+    player: string;
+    state: GameStateDTO;
+}
+
+export interface Failure {
+    success: false;
+    error: string;
+}
+
+export type CreateGameResponse = CreateGameSuccess | Failure;
+
+export interface JoinGameSuccess {
+    success: true;
+    player: string;
+    state: GameStateDTO;
+}
+
+export type JoinGameResponse = JoinGameSuccess | Failure;
+
+export interface MoveSuccess {
+    success: true;
+    winner: string;
+    isFinished: boolean;
+    state: GameStateDTO;
+}
+
+export type MoveResponse = MoveSuccess | Failure;
+
+export interface LeaveGameSuccess {
+    success: true;
+    remaining: { id: string; symbol: string }[];
+    state: GameStateDTO;
+}
+
+export type LeaveGameResponse = LeaveGameSuccess | Failure;

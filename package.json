@@ -9,11 +9,8 @@
     "concurrently": "^8.2.0"
   },
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only backend/src/index.ts",
     "dev:all": "npx concurrently \"npm run dev\" \"npm --prefix frontend run dev\"",
     "test:e2e": "npx playwright test --config=frontend/playwright.config.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
     "test": "jest --runInBand"
   },
   "dependencies": {

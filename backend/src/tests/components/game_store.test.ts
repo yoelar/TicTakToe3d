@@ -1,4 +1,11 @@
-﻿import { createGame, joinGame, makeMove, games } from '../../components/GameStore';
+﻿import { Failure } from 'tictactoe3d-shared';
+import { createGame, joinGame, makeMove, games } from '../../components/GameStore';
+import {
+    expectCreateSuccess,
+    expectJoinSuccess,
+    expectLeaveSuccess,
+    expectMoveSuccess
+} from '../helpers/assertions';
 
 describe('GameStore', () => {
     const clientA = 'clientA';
@@ -11,7 +18,7 @@ describe('GameStore', () => {
     });
 
     it('creates a new game and assigns X to the first player', () => {
-        const result = createGame(clientA);
+        const result = expectCreateSuccess(createGame(clientA));
         expect(result).toHaveProperty('gameId');
         expect(result.player).toBe('X');
         expect(games[result.gameId]).toBeDefined();
@@ -19,27 +26,27 @@ describe('GameStore', () => {
     });
 
     it('allows a second player to join with opposite sign', () => {
-        const g1 = createGame(clientA);
-        const join = joinGame(g1.gameId, clientB);
+        const g1 = expectCreateSuccess(createGame(clientA));
+        const join = expectJoinSuccess(joinGame(g1.gameId, clientB));
         expect(join.success).toBe(true);
         expect(join.player).toBe('O');
     });
 
     it('rejects joining a full game', () => {
-        const g1 = createGame(clientA);
+        const g1 = expectCreateSuccess(createGame(clientA));
         joinGame(g1.gameId, clientB);
         const join3 = joinGame(g1.gameId, 'clientC');
         expect(join3.success).toBe(false);
-        expect(join3.error).toMatch(/full/i);
+        expect((join3 as Failure).error).toMatch(/full/i);
     });
 
     it('should alternate automatically in solo mode', () => {
-        const { gameId } = createGame(clientA);
+        const { gameId } = expectCreateSuccess(createGame(clientA));
 
         const move1 = makeMove(gameId, clientA, { x: 0, y: 0, z: 0 });
         expect(move1.success).toBe(true);
 
-        const move2 = makeMove(gameId, clientA, { x: 1, y: 1, z: 1 });
+        const move2 = expectMoveSuccess(makeMove(gameId, clientA, { x: 1, y: 1, z: 1 }));
         expect(move2.success).toBe(true);
 
         const board = move2.state.board;
@@ -48,7 +55,7 @@ describe('GameStore', () => {
     });
 
     it('should reject a move if it is not the player’s turn in two-player mode', () => {
-        const g1 = createGame('playerX');
+        const g1 = expectCreateSuccess(createGame('playerX'));
         joinGame(g1.gameId, 'playerO');
 
         // X moves first
@@ -58,7 +65,7 @@ describe('GameStore', () => {
         // X tries again immediately — should fail
         const move2 = makeMove(g1.gameId, 'playerX', { x: 1, y: 0, z: 0 });
         expect(move2.success).toBe(false);
-        expect(move2.error).toMatch(/^not .*turn$/i);
+        expect((move2 as Failure).error).toMatch(/^not .*turn$/i);
     });
 
 });

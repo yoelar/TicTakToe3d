@@ -1,3 +1,4 @@
 ﻿// backend/src/components/types.ts
-export { Symbol, TicTacToePlayer, GameState, MoveResult } from '../../../Shared/types';
+export { Symbol, TicTacToePlayer, GameState, MoveResult } from "tictactoe3d-shared";
+
 
