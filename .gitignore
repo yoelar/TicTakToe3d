@@ -404,3 +404,4 @@ FodyWeavers.xsd
 /Shared/types.js
 /backend/src/tests/websocket/GameRoom.test.js
 /frontend/coverage
+/backend/dist
