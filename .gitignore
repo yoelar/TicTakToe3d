@@ -405,3 +405,5 @@ FodyWeavers.xsd
 /backend/src/tests/websocket/GameRoom.test.js
 /frontend/coverage
 /backend/dist
+/frontend/dist/assets/index-B0yu7dUA.js
+/frontend/dist/assets/index-CAZbaujb.js
