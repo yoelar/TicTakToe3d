@@ -9,15 +9,20 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
     "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "pino": "^10.1.0",
+    "supertest": "^7.1.4",
     "tictactoe3d-shared": "file:../Shared"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.10.5",
+    "@types/pino": "^7.0.4",
+    "@types/supertest": "^6.0.3",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "@types/node": "^20.10.5",
-    "@types/express": "^4.17.21"
+    "typescript": "^5.3.3"
   }
 }
