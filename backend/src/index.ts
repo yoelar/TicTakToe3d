@@ -1,6 +1,7 @@
 // backend/src/index.ts
 import express, { Request, Response } from 'express';
 import http from 'http';
+import cors from 'cors'; // <-- add this
 import { randomUUID } from 'crypto';
 import {
     games,
@@ -10,10 +11,18 @@ import {
     leaveGame
 } from './components/GameStore';
 import { getLogger } from './logger';
+
 const log = getLogger('API');
 
 export const app = express();
 app.use(express.json());
+
+// ---------- ADD CORS ----------
+// Allow requests from your frontend
+app.use(cors({
+    origin: 'http://localhost:5173',  // your frontend
+    methods: ['GET', 'POST'],
+}));
 
 // ---------- REST API Implementation ----------
 
