@@ -2,7 +2,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { useGamePolling } from '../../hooks/useGamePolling';
 import { IGameApiService } from '../../services/GameApiService';
-import { GameState } from '../../../../Shared/types';
+import { GameState } from 'tictactoe3d-shared';
 
 describe('useGamePolling', () => {
     let mockApiService: jest.Mocked<IGameApiService>;

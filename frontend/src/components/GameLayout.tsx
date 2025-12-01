@@ -3,7 +3,7 @@ import GameBoard from "./GameBoard";
 import GameStatus from "./GameStatus";
 import PlayerPanel from "./PlayerPanel";
 import GameMenu from "./GameMenu";
-import type { GameState, TicTacToePlayer } from "../../../Shared/types";
+import type { GameState, TicTacToePlayer } from "tictactoe3d-shared";
 
 interface GameLayoutProps {
     gameId: string;

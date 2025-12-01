@@ -1,6 +1,6 @@
 ﻿// src/hooks/useGameLifecycle.ts
 import { useState, useEffect, useCallback } from 'react';
-import { GameState, TicTacToePlayer } from '../../../Shared/types';
+import { GameState, TicTacToePlayer } from 'tictactoe3d-shared';
 import { emptyBoard } from '../utils/board';
 import { GameApiService } from '../services/GameApiService';
 

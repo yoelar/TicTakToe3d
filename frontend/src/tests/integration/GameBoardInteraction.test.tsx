@@ -1,7 +1,7 @@
 ﻿// src/tests/integration/GameBoardInteraction.test.tsx - Update to match reality
 import { render, screen, fireEvent } from '@testing-library/react';
 import { GameLayout } from '../../components/GameLayout';
-import { GameState } from '../../../../Shared/types';
+import { GameState } from 'tictactoe3d-shared';
 
 describe('GameBoard Interaction', () => {
     const mockGameState: GameState = {

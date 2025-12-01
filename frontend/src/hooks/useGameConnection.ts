@@ -1,6 +1,6 @@
 ﻿// frontend/src/hooks/useGameConnection.ts
 import { useState, useCallback } from 'react';
-import { GameState } from '../../../Shared/types';
+import { GameState } from 'tictactoe3d-shared';
 import { IGameApiService } from '../services/GameApiService';
 
 /**

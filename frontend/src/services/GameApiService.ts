@@ -1,5 +1,5 @@
 ﻿// frontend/src/services/GameApiService.ts
-import { GameState } from '../../../Shared/types';
+import { GameState } from 'tictactoe3d-shared';
 
 export interface IGameApiService {
     createGame(clientId: string): Promise<{ gameId: string; state: GameState }>;

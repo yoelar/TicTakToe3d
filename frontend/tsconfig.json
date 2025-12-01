@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "esnext",
     "lib": [ "DOM", "ES2021" ],
     "jsx": "react-jsx",
     "module": "ESNext",
@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": [ "vite/client" ]
   },
-  "include": [ "src", "../shared/dist" ]
+  "include": [ "src" ]
 }
