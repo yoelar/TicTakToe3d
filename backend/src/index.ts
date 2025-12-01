@@ -19,10 +19,7 @@ app.use(express.json());
 
 // ---------- ADD CORS ----------
 // Allow requests from your frontend
-app.use(cors({
-    origin: 'http://localhost:5173',  // your frontend
-    methods: ['GET', 'POST'],
-}));
+app.use(cors()); // defaults to allowing all origins
 
 // ---------- REST API Implementation ----------
 
