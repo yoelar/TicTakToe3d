@@ -452,3 +452,6 @@ FodyWeavers.xsd
 /frontend/src/tests/services/GameApiService.test.js
 /frontend/src/App.js
 /Shared/dist
+/frontend/dist/assets/index-B-gWrhcj.js
+/frontend/dist/index.html
+/frontend/package-lock.json
