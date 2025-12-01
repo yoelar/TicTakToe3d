@@ -1,6 +1,6 @@
 ﻿// src/components/BoardLayer.tsx
 import React from 'react';
-import Cell from './Cell';
+import Cell from './cell';
 import { Symbol } from '../hooks/useGameState';
 
 type Props = {
