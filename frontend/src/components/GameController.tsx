@@ -7,9 +7,10 @@ import { useAutoJoin } from "../hooks/useAutoJoin";
 import { useGameConnection } from "../hooks/useGameConnection";
 import { useGamePolling } from "../hooks/useGamePolling";
 import { GameApiService } from "../services/GameApiService";
+import { API_BASE } from "../config";
 
 // Dependency Injection: Services created once
-const apiService = new GameApiService('/api');
+const apiService = new GameApiService(API_BASE);
 
 /**
  * Main game orchestrator following Single Responsibility Principle.

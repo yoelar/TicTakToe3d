@@ -5,13 +5,13 @@
   "license": "MIT",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "npm --prefix ../shared run build && tsc -p tsconfig.json",
+    "build": "npm --prefix ../Shared run build && tsc -p tsconfig.json",
     "start": "node dist/index.js"
   },
   "dependencies": {
     "express": "^4.19.2",
     "cors": "^2.8.5",
-    "tictactoe3d-shared": "file:../shared"
+    "tictactoe3d-shared": "file:../Shared"
   },
   "devDependencies": {
     "typescript": "^5.3.3",
